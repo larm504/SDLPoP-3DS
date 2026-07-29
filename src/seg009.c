@@ -21,6 +21,9 @@ The authors of this program may be contacted at https://forum.princed.org
 #include "common.h"
 #include <time.h>
 #include <errno.h>
+#ifdef __3DS__
+#include <3ds.h>
+#endif
 
 #ifdef _WIN32
 #include <windows.h>
@@ -39,6 +42,9 @@ The authors of this program may be contacted at https://forum.princed.org
 void sdlperror(const char* header) {
 	const char* error = SDL_GetError();
 	printf("%s: %s\n",header,error);
+#ifdef __3DS__
+	fflush(stdout);
+#endif
 	//quit(1);
 }
 
@@ -342,6 +348,9 @@ void quit(int exit_code) {
 
 // seg009:0C90
 void restore_stuff() {
+#ifdef __3DS__
+	romfsExit();
+#endif
 	SDL_Quit();
 }
 
@@ -871,15 +880,23 @@ image_type* decode_image(image_data_type* image_data, dat_pal_type* palette) {
 		colors[i].r = palette->vga[i].r << 2;
 		colors[i].g = palette->vga[i].g << 2;
 		colors[i].b = palette->vga[i].b << 2;
+#ifndef __3DS__
 		colors[i].a = SDL_ALPHA_OPAQUE;   // SDL2's SDL_Color has a fourth alpha component
+#endif
 	}
 	// Force 0th color to be black for non-transparent blitters. (hitpoints, shadow)
 	// This is needed to remove the colored rectangles around hitpoints and the shadow, when using Brain's SNES graphics for example.
 	colors[0].r = 0;
 	colors[0].g = 0;
 	colors[0].b = 0;
+#ifndef __3DS__
 	colors[0].a = SDL_ALPHA_TRANSPARENT;
+#endif
+#ifdef __3DS__
+	SDL_SetPalette(image, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, 16);
+#else
 	SDL_SetPaletteColors(image->format->palette, colors, 0, 16); // SDL_SetColors = deprecated
+#endif
 	return image;
 }
 
@@ -951,10 +968,17 @@ void draw_image_transp(image_type* image,image_type* mask,int xpos,int ypos) {
 
 // seg009:157E
 int set_joy_mode() {
+#ifdef __3DS__
+	// 3DS buttons are mapped to keyboard events via SDL_N3DSKeyBind (set up in set_gr_mode).
+	is_joyst_mode = 0;
+	is_keyboard_mode = 1;
+	return 0;
+#endif
 	// stub
 	if (SDL_NumJoysticks() < 1) {
 		is_joyst_mode = 0;
 	} else {
+#ifndef __3DS__
 		if (gamecontrollerdb_file[0] != '\0') {
 			SDL_GameControllerAddMappingsFromFile(gamecontrollerdb_file);
 		}
@@ -970,17 +994,22 @@ int set_joy_mode() {
 		// We have a joystick connected, but it's NOT compatible with the SDL_GameController
 		// interface, so we resort to the classic SDL_Joystick interface instead
 		else {
+#endif // !__3DS__
 			sdl_joystick_ = SDL_JoystickOpen(0);
 			is_joyst_mode = 1;
 			using_sdl_joystick_interface = 1;
+#ifndef __3DS__
 		}
+#endif // !__3DS__
 	}
+#ifndef __3DS__
 	if (enable_controller_rumble && is_joyst_mode) {
 		sdl_haptic = SDL_HapticOpen(0);
 		SDL_HapticRumbleInit(sdl_haptic); // initialize the device for simple rumble
 	} else {
 		sdl_haptic = NULL;
 	}
+#endif // !__3DS__
 
 	is_keyboard_mode = !is_joyst_mode;
 	return is_joyst_mode;
@@ -1623,8 +1652,10 @@ int input_str(const rect_type* rect,char* buffer,int max_length,const char *init
 	//SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 	SDL_Rect sdlrect;
 	rect_to_sdlrect(rect, &sdlrect);
+#ifndef __3DS__
 	SDL_SetTextInputRect(&sdlrect);
 	SDL_StartTextInput();
+#endif
 
 	word key;
 	short current_xpos;
@@ -1660,7 +1691,9 @@ int input_str(const rect_type* rect,char* buffer,int max_length,const char *init
 				}
 				if (key == SDL_SCANCODE_RETURN) { // Enter
 					buffer[length] = 0;
-					SDL_StopTextInput();
+	#ifndef __3DS__
+				SDL_StopTextInput();
+#endif
 					return length;
 				} else break;
 			}
@@ -1673,7 +1706,9 @@ int input_str(const rect_type* rect,char* buffer,int max_length,const char *init
 		if (key == SDL_SCANCODE_ESCAPE) { // Esc
 			draw_rect(rect, bgcolor);
 			buffer[0] = 0;
+#ifndef __3DS__
 			SDL_StopTextInput();
+#endif
 			return -1;
 		}
 		if (length != 0 && (key == SDL_SCANCODE_BACKSPACE ||
@@ -2158,6 +2193,10 @@ void init_digi() {
 	// Open the audio device. Called once.
 	//printf("init_digi(): called\n");
 
+#ifdef __3DS__
+	// SDL 1.2: no runtime version query needed; always use 16-bit audio
+	Uint16 desired_audioformat = AUDIO_S16SYS;
+#else
 	SDL_AudioFormat desired_audioformat;
 	SDL_version version;
 	SDL_GetVersion(&version);
@@ -2171,6 +2210,7 @@ void init_digi() {
 	} else {
 		desired_audioformat = AUDIO_S16SYS;
 	}
+#endif
 
 	SDL_AudioSpec *desired;
 	desired = (SDL_AudioSpec *)malloc(sizeof(SDL_AudioSpec));
@@ -2480,6 +2520,7 @@ int check_sound_playing() {
 }
 
 void apply_aspect_ratio() {
+#ifndef __3DS__
 	// Allow us to use a consistent set of screen co-ordinates, even if the screen size changes
 	if (use_correct_aspect_ratio) {
 		SDL_RenderSetLogicalSize(renderer_, 320 * 5, 200 * 6); // 4:3
@@ -2487,6 +2528,7 @@ void apply_aspect_ratio() {
 		SDL_RenderSetLogicalSize(renderer_, 320, 200); // 16:10
 	}
 	window_resized();
+#endif
 }
 
 void window_resized() {
@@ -2518,6 +2560,7 @@ void init_overlay(void) {
 SDL_Surface* onscreen_surface_2x;
 
 void init_scaling(void) {
+#ifndef __3DS__
 	// Don't crash in validate mode.
 	if (renderer_ == NULL) return;
 
@@ -2553,10 +2596,23 @@ void init_scaling(void) {
 		sdlperror("init_scaling: SDL_CreateTexture");
 		quit(1);
 	}
+#endif // !__3DS__
 }
 
 // seg009:38ED
 void set_gr_mode(byte grmode) {
+#ifdef __3DS__
+	// SDL 1.2 init for 3DS: just video + timer, then SetVideoMode for the screen surface
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO) != 0) {
+		sdlperror("set_gr_mode: SDL_Init");
+		quit(1);
+	}
+	onscreen_surface_ = SDL_SetVideoMode(320, 200, 16, SDL_SWSURFACE | SDL_TOPSCR);
+	if (onscreen_surface_ == NULL) {
+		sdlperror("set_gr_mode: SDL_SetVideoMode");
+		quit(1);
+	}
+#else
 #ifdef SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING
 	SDL_SetHint(SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING, "1");
 #endif
@@ -2660,6 +2716,7 @@ void set_gr_mode(byte grmode) {
 //		sdlperror("set_gr_mode: SDL_EnableKeyRepeat");
 //		quit(1);
 //	}
+#endif // !__3DS__
 	graphics_mode = gmMcgaVga;
 #ifdef USE_TEXT
 	load_font();
@@ -2667,14 +2724,21 @@ void set_gr_mode(byte grmode) {
 }
 
 SDL_Surface* get_final_surface() {
+#ifdef __3DS__
+	return onscreen_surface_; // no overlay support on 3DS
+#else
 	if (!is_overlay_displayed) {
 		return onscreen_surface_;
 	} else {
 		return merged_surface;
 	}
+#endif
 }
 
 void draw_overlay(void) {
+#ifdef __3DS__
+	return; // no overlay on 3DS: is_overlay_displayed not compiled in
+#else
 	int overlay = 0;
 	is_overlay_displayed = false;
 #ifdef USE_DEBUG_CHEATS
@@ -2760,11 +2824,16 @@ void draw_overlay(void) {
 		SDL_BlitSurface(overlay_surface, &sdl_rect, merged_surface, &sdl_rect);
 		current_target_surface = saved_target_surface;
 	}
+#endif // !__3DS__
 }
 
 void update_screen() {
 	draw_overlay();
 	SDL_Surface* surface = get_final_surface();
+#ifdef __3DS__
+	// SDL 1.2: flip the screen surface directly
+	SDL_Flip(surface);
+#else
 	init_scaling();
 	if (scaling_type == 1) {
 		// Make "fuzzy pixels" like DOSBox does:
@@ -2789,6 +2858,7 @@ void update_screen() {
 	SDL_RenderClear(renderer_);
 	SDL_RenderCopy(renderer_, target_texture, NULL, NULL);
 	SDL_RenderPresent(renderer_);
+#endif // !__3DS__
 }
 
 // seg009:9289
@@ -3044,9 +3114,12 @@ image_type* method_3_blit_mono(image_type* image,int xpos,int ypos,int blitter,b
 		sdlperror("method_3_blit_mono: SDL_SetColorKey");
 		quit(1);
 	}
+#ifdef __3DS__
+	SDL_Surface* colored_image = SDL_DisplayFormatAlpha(image);
+#else
 	SDL_Surface* colored_image = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_ARGB8888, 0);
-
 	SDL_SetSurfaceBlendMode(colored_image, SDL_BLENDMODE_NONE);
+#endif
 	/* Causes problems with SDL 2.0.5 (see #105)
 	if (SDL_SetColorKey(colored_image, SDL_TRUE, 0) != 0) {
 		sdlperror("method_3_blit_mono: SDL_SetColorKey");
@@ -3076,9 +3149,13 @@ image_type* method_3_blit_mono(image_type* image,int xpos,int ypos,int blitter,b
 	SDL_Rect src_rect = {0, 0, image->w, image->h};
 	SDL_Rect dest_rect = {xpos, ypos, image->w, image->h};
 
+#ifdef __3DS__
+	SDL_SetAlpha(colored_image, SDL_SRCALPHA, 255);
+#else
 	SDL_SetSurfaceBlendMode(colored_image, SDL_BLENDMODE_BLEND);
 	SDL_SetSurfaceBlendMode(current_target_surface, SDL_BLENDMODE_BLEND);
 	SDL_SetSurfaceAlphaMod(colored_image, 255);
+#endif
 	if (SDL_BlitSurface(colored_image, &src_rect, current_target_surface, &dest_rect) != 0) {
 		sdlperror("method_3_blit_mono: SDL_BlitSurface");
 		quit(1);
@@ -3244,8 +3321,12 @@ void draw_colored_torch(int color, SDL_Surface* image, int xpos, int ypos) {
 		quit(1);
 	}
 
+#ifdef __3DS__
+	SDL_Surface* colored_image = SDL_DisplayFormatAlpha(image);
+#else
 	SDL_Surface* colored_image = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_ARGB8888, 0);
 	SDL_SetSurfaceBlendMode(colored_image, SDL_BLENDMODE_NONE);
+#endif
 
 	if (SDL_LockSurface(colored_image) != 0) {
 		sdlperror("draw_colored_torch: SDL_LockSurface");
@@ -3304,6 +3385,18 @@ image_type* method_6_blit_img_to_scr(image_type* image,int xpos,int ypos,int bli
 	}
 #endif
 
+#ifdef __3DS__
+	// SDL 1.2: use colorkey and per-surface alpha instead of blend modes
+	SDL_SetColorKey(image, 0, 0);  // disable colorkey
+	SDL_SetAlpha(image, 0, 0);     // disable per-surface alpha
+	if (blit != blitters_0_no_transp) {
+		if (image->format->BitsPerPixel <= 8) {
+			SDL_SetColorKey(image, SDL_SRCCOLORKEY, 0);
+		} else {
+			SDL_SetAlpha(image, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
+		}
+	}
+#else
 	SDL_SetSurfaceBlendMode(image, SDL_BLENDMODE_NONE);
 	SDL_SetColorKey(image, SDL_FALSE, 0);
 	SDL_SetSurfaceAlphaMod(image, 255);
@@ -3329,6 +3422,7 @@ image_type* method_6_blit_img_to_scr(image_type* image,int xpos,int ypos,int bli
 			//printf("SDL_BLENDMODE_BLEND\n");
 		}
 	}
+#endif
 	if (SDL_BlitSurface(image, &src_rect, current_target_surface, &dest_rect) != 0) {
 		sdlperror("method_6_blit_img_to_scr: SDL_BlitSurface 2247");
 		//quit(1);
@@ -3364,7 +3458,11 @@ Uint32 timer_callback(Uint32 interval, void *param) {
 
 void reset_timer(int timer_index) {
 #ifndef USE_COMPAT_TIMER
+#ifdef __3DS__
+	timer_last_counter[timer_index] = (Uint64)SDL_GetTicks();
+#else
 	timer_last_counter[timer_index] = SDL_GetPerformanceCounter();
+#endif
 #endif
 }
 
@@ -3405,12 +3503,17 @@ void start_timer(int timer_index, int length) {
 	if (replaying && skipping_replay) return;
 #endif
 #ifndef USE_COMPAT_TIMER
+#ifdef __3DS__
+	timer_last_counter[timer_index] = (Uint64)SDL_GetTicks();
+#else
 	timer_last_counter[timer_index] = SDL_GetPerformanceCounter();
+#endif
 #endif
 	wait_time[timer_index] = length;
 }
 
 void toggle_fullscreen(void) {
+#ifndef __3DS__
 	uint32_t flags = SDL_GetWindowFlags(window_);
 	if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) {
 		SDL_SetWindowFullscreen(window_, 0);
@@ -3420,11 +3523,49 @@ void toggle_fullscreen(void) {
 		SDL_SetWindowFullscreen(window_, SDL_WINDOW_FULLSCREEN_DESKTOP);
 		SDL_ShowCursor(SDL_DISABLE);
 	}
+#endif
 }
 
 bool ignore_tab = false;
 
 void process_events() {
+#ifdef __3DS__
+	// The SDL-3DS portlib only generates mouse events from touchscreen; it never produces
+	// SDL_KEYDOWN/UP events for hardware buttons. Read HID state directly and update
+	// key_states[] (indexed by SDLK_* via our SDL_SCANCODE_* compat macros).
+	{
+		hidScanInput();
+		u32 kDown = hidKeysDown();
+		u32 kHeld = hidKeysHeld();
+		static const struct { u32 hid; int key; } map[] = {
+			{ KEY_DUP    | KEY_CPAD_UP,    SDL_SCANCODE_UP        },
+			{ KEY_DDOWN  | KEY_CPAD_DOWN,  SDL_SCANCODE_DOWN      },
+			{ KEY_DLEFT  | KEY_CPAD_LEFT,  SDL_SCANCODE_LEFT      },
+			{ KEY_DRIGHT | KEY_CPAD_RIGHT, SDL_SCANCODE_RIGHT     },
+			{ KEY_A | KEY_R,               SDL_SCANCODE_LSHIFT    }, // action (A or R shoulder)
+			{ KEY_B,                       SDL_SCANCODE_RSHIFT    }, // also action
+			{ KEY_X,                       SDL_SCANCODE_RETURN    }, // confirm/continue
+			{ KEY_Y,                       SDL_SCANCODE_BACKSPACE }, // pause menu
+			{ KEY_START,                   SDL_SCANCODE_ESCAPE    }, // pause
+			{ KEY_SELECT,                  SDL_SCANCODE_BACKSPACE }, // also pause menu
+			{ KEY_L,                       SDL_SCANCODE_SPACE     }, // show timer
+		};
+		for (int i = 0; i < (int)(sizeof(map)/sizeof(map[0])); i++) {
+			int k = map[i].key;
+			if (kHeld & map[i].hid) {
+				key_states[k] |= KEYSTATE_HELD;
+			} else {
+				key_states[k] &= ~KEYSTATE_HELD;
+			}
+			if (kDown & map[i].hid) {
+				key_states[k] |= KEYSTATE_HELD_NEW;
+				last_any_key_scancode = k;
+				last_key_scancode = k; // feeds read_key() / menu navigation
+			}
+		}
+		fflush(stdout); // flush log file each tick so output survives crashes
+	}
+#endif
 	// Process all events in the queue.
 	// Previously, this procedure would wait for *one* event and process it, then return.
 	// Much like the x86 HLT instruction.
@@ -3436,7 +3577,11 @@ void process_events() {
 			case SDL_KEYDOWN:
 			{
 				int modifier = event.key.keysym.mod;
+#ifdef __3DS__
+				int scancode = event.key.keysym.sym;
+#else
 				int scancode = event.key.keysym.scancode;
+#endif
 
 				// Handle these separately, so they won't interrupt things that are usually interrupted by a keypress. (pause, cutscene)
 #ifdef USE_FAST_FORWARD
@@ -3536,25 +3681,33 @@ void process_events() {
 				break;
 			}
 			case SDL_KEYUP:
+			{
+#ifdef __3DS__
+				int scancode = event.key.keysym.sym;
+#else
+				int scancode = event.key.keysym.scancode;
+#endif
 				// If Alt was held down from Alt+Tab but now it's released: stop ignoring Tab.
-				if (event.key.keysym.scancode == SDL_SCANCODE_TAB && ignore_tab) ignore_tab = false;
+				if (scancode == SDL_SCANCODE_TAB && ignore_tab) ignore_tab = false;
 
 #ifdef USE_FAST_FORWARD
-				if (event.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
+				if (scancode == SDL_SCANCODE_GRAVE) {
 					init_timer(BASE_FPS); // fast-forward off
 					audio_speed = 1;
 					break;
 				}
 #endif
 
-				key_states[event.key.keysym.scancode] &= ~KEYSTATE_HELD;
+				key_states[scancode] &= ~KEYSTATE_HELD;
 #ifdef USE_MENU
 				// Prevent repeated keystrokes opening/closing the menu as long as the key is held down.
-				if (event.key.keysym.scancode == SDL_SCANCODE_BACKSPACE || event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+				if (scancode == SDL_SCANCODE_BACKSPACE || scancode == SDL_SCANCODE_ESCAPE) {
 					escape_key_suppressed = false;
 				}
 #endif
 				break;
+			}
+#ifndef __3DS__ // SDL2-only events: GameController, Joystick, TextInput, WindowEvent
 			case SDL_CONTROLLERAXISMOTION:
 				if (event.caxis.axis < 6) {
 					joy_axis[event.caxis.axis] = event.caxis.value;
@@ -3743,6 +3896,7 @@ void process_events() {
 					break;
 				}
 				break;
+#endif // !__3DS__
 			case SDL_USEREVENT:
 				if (event.user.code == userevent_TIMER /*&& event.user.data1 == (void*)timer_index*/) {
 #ifdef USE_COMPAT_TIMER
@@ -3773,12 +3927,14 @@ void process_events() {
 				}
 
 				break;
+#ifndef __3DS__
 			case SDL_MOUSEWHEEL:
 				if (is_menu_shown) {
 					menu_control_scroll_y = -event.wheel.y;
 				}
 				break;
-#endif
+#endif // !__3DS__
+#endif // USE_MENU
 			case SDL_QUIT:
 #ifdef USE_MENU
 				if (is_menu_shown) {
@@ -3827,12 +3983,16 @@ SDL_TimerID global_timer = 0;
 #endif
 // seg009:78E9
 void init_timer(int frequency) {
+#ifdef __3DS__
+	perf_frequency = 1000; // SDL_GetTicks returns milliseconds
+#else
 	perf_frequency = SDL_GetPerformanceFrequency();
+#endif
 #ifndef USE_COMPAT_TIMER
 	fps = frequency;
 	milliseconds_per_tick = 1000.0f / (float)fps;
 	perf_counters_per_tick = perf_frequency / fps;
-	milliseconds_per_counter = 1000.0f / perf_frequency;
+	milliseconds_per_counter = 1000.0f / (float)perf_frequency;
 #else
 	global_timer = SDL_AddTimer(1000/frequency, timer_callback, NULL);
 	if (global_timer != 0) {
@@ -4187,13 +4347,17 @@ void set_chtab_palette(chtab_type* chtab, byte* colors, int n_colors) {
 			scolors[i].r = *colors << 2; ++colors;
 			scolors[i].g = *colors << 2; ++colors;
 			scolors[i].b = *colors << 2; ++colors;
+#ifndef __3DS__
 			scolors[i].a = SDL_ALPHA_OPAQUE; // the SDL2 SDL_Color struct has an alpha component
+#endif
 		}
 
 		// Color 0 of the palette data is not used, it is replaced by the background color.
 		// Needed for correct alternate colors (v1.3) of level 8.
 		scolors[0].r = scolors[0].g = scolors[0].b = 0;
+#ifndef __3DS__
 		scolors[0].a = SDL_ALPHA_TRANSPARENT;
+#endif
 
 		//printf("setcolors\n",i);
 		for (int i = 0; i < chtab->n_images; ++i) {
@@ -4211,10 +4375,17 @@ void set_chtab_palette(chtab_type* chtab, byte* colors, int n_colors) {
 					if (current_palette->ncolors < n_colors_to_be_set) {
 						n_colors_to_be_set = current_palette->ncolors;
 					}
+#ifdef __3DS__
+					if (SDL_SetPalette(current_image, SDL_LOGPAL|SDL_PHYSPAL, scolors, 0, n_colors_to_be_set) == 0) {
+						sdlperror("set_chtab_palette: SDL_SetPalette");
+						quit(1);
+					}
+#else
 					if (SDL_SetPaletteColors(current_palette, scolors, 0, n_colors_to_be_set) != 0) {
 						sdlperror("set_chtab_palette: SDL_SetPaletteColors");
 						quit(1);
 					}
+#endif
 				}
 			}
 		}
@@ -4230,7 +4401,11 @@ int has_timer_stopped(int timer_index) {
 	if ((replaying && skipping_replay) || is_validate_mode) return true;
 #endif
 	//PSP: overshoot always too big, 333mhz mandatory to read input!
+#ifdef __3DS__
+	Uint64 current_counter = (Uint64)SDL_GetTicks();
+#else
 	Uint64 current_counter = SDL_GetPerformanceCounter();
+#endif
 	int ticks_elapsed = (int)((current_counter / perf_counters_per_tick) - (timer_last_counter[timer_index] / perf_counters_per_tick));
 	int overshoot = ticks_elapsed - wait_time[timer_index];
 	if (overshoot >= 0) {

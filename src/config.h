@@ -345,10 +345,17 @@ The authors of this program may be contacted at https://forum.princed.org
 
 
 // Darken those parts of the screen which are not near a torch.
+// Disabled on 3DS: SDL 1.2 has no blend mode API (SDL_SetSurfaceBlendMode,
+// SDL_BLENDMODE_MOD, SDL_BLENDMODE_ADD are SDL2-only).
+#ifndef __3DS__
 #define USE_LIGHTING
+#endif
 
 // Enable screenshot features.
+// Disabled on 3DS: IMG_SavePNG is SDL2_image only and not available in SDL_image 1.2.
+#ifndef __3DS__
 #define USE_SCREENSHOT
+#endif
 
 // Automatically switch to keyboard or joystick/gamepad mode if there is input from that device.
 // Useful if SDL detected a gamepad but there is none.

@@ -24,13 +24,17 @@ The authors of this program may be contacted at https://forum.princed.org
 #define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.c"
 
-#if !defined(_MSC_VER)
+#ifdef __3DS__
+// SDL 1.2 headers as installed by devkitPro's 3ds-sdl package
+# include <SDL/SDL.h>
+# include <SDL/SDL_image.h>
+#elif !defined(_MSC_VER)
 # include <SDL2/SDL.h>
 # include <SDL2/SDL_image.h>
 #else
 // These headers for SDL seem to be the pkgconfig/meson standard as per the
 // latest versions. If the old ones should be used, the ifdef must be used
-// to compare versions. 
+// to compare versions.
 # include <SDL.h>
 # include <SDL_image.h>
 #endif

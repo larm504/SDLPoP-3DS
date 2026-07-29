@@ -1158,6 +1158,13 @@ bool is_mouse_over_rect(rect_type* rect) {
 
 // Maps the cursor position into a coordinate between (0,0) and (320,200) and sets mouse_x, mouse_y and mouse_moved.
 void read_mouse_state(void) {
+#ifdef __3DS__
+	// No mouse on 3DS.
+	mouse_x = 0;
+	mouse_y = 0;
+	mouse_moved = false;
+	return;
+#else
 	float scale_x, scale_y;
 	SDL_RenderGetScale(renderer_, &scale_x, &scale_y);
 	int logical_width, logical_height;
@@ -1177,6 +1184,7 @@ void read_mouse_state(void) {
 	mouse_x = (int) ((float)mouse_x/scale_x - viewport.x + 0.5f);
 	mouse_y = (int) ((float)mouse_y/scale_y - viewport.y + 0.5f);
 	mouse_moved = (last_mouse_x != mouse_x || last_mouse_y != mouse_y);
+#endif // !__3DS__
 }
 
 rect_type explanation_rect = {170, 20, 200, 300};
@@ -1395,7 +1403,9 @@ void turn_setting_on_off(int setting_id, byte new_state, void* linked) {
 			break;
 		case SETTING_FULLSCREEN:
 			start_fullscreen = new_state;
+#ifndef __3DS__ // fullscreen toggling is meaningless on 3DS
 			SDL_SetWindowFullscreen(window_, (new_state != 0) * SDL_WINDOW_FULLSCREEN_DESKTOP);
+#endif
 			break;
 		case SETTING_USE_CORRECT_ASPECT_RATIO:
 			use_correct_aspect_ratio = new_state;
@@ -1692,7 +1702,11 @@ void draw_setting(setting_type* setting, rect_type* parent, int* y_offset, int i
 	} else if (setting->style == SETTING_STYLE_KEY && !disabled) {
 		int value = get_setting_value(setting);
 		char value_text[256];
+#ifdef __3DS__
+		snprintf(value_text, sizeof(value_text), "%s (%d)", SDL_GetKeyName(value), value);
+#else
 		snprintf(value_text, sizeof(value_text), "%s (%d)", SDL_GetScancodeName(value), value);
+#endif
 		show_text_with_color(&text_rect, 1, -1, value_text, selected_color);
 
 	} else {
@@ -2163,6 +2177,7 @@ void process_additional_menu_input() {
 	have_keyboard_or_controller_input = (menu_control_x || menu_control_y || menu_control_back || pressed_enter);
 	have_mouse_input = (mouse_moved || mouse_clicked || mouse_button_clicked_right || menu_control_scroll_y);
 
+#ifndef __3DS__ // window_ and SDL_GetWindowFlags are SDL2-only; 3DS is always fullscreen
 	dword flags = SDL_GetWindowFlags(window_);
 	if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) {
 		if (have_mouse_input) {
@@ -2173,6 +2188,7 @@ void process_additional_menu_input() {
 	} else {
 		SDL_ShowCursor(SDL_ENABLE);
 	}
+#endif // !__3DS__
 }
 
 bool joy_ABXY_buttons_released;
@@ -2201,6 +2217,7 @@ int key_test_paused_menu(int key) {
 			joy_y = 1;
 		int y_threshold = 14000;
 		int x_threshold = 26000; // Less sensitive, to prevent accidentally changing a setting.
+#ifndef __3DS__ // SDL_CONTROLLER_AXIS_* are SDL2 GameController API
 		if (joy_axis[SDL_CONTROLLER_AXIS_LEFTY] < -y_threshold) {
 			joy_y = -1;
 		} else if (joy_axis[SDL_CONTROLLER_AXIS_LEFTY] > y_threshold) {
@@ -2210,6 +2227,7 @@ int key_test_paused_menu(int key) {
 		} else if (joy_axis[SDL_CONTROLLER_AXIS_LEFTX] > x_threshold) {
 			joy_x = 1;
 		}
+#endif // !__3DS__
 
 		float needed_timeout_s = 0.1f; // Delay for hold-down repeated input.
 		if (joy_x == 0 && joy_y == 0) {
@@ -2220,6 +2238,16 @@ int key_test_paused_menu(int key) {
 				needed_timeout_s = 0.3f; // The delay is longer for the first repetition.
 				joy_xy_released = false;
 			}
+#ifdef __3DS__
+			// SDL 1.2 has no SDL_GetPerformanceCounter; use SDL_GetTicks() (milliseconds).
+			Uint64 current_counter = (Uint64)SDL_GetTicks();
+			if (current_counter > joy_xy_timeout_counter) {
+				menu_control_x = joy_x;
+				menu_control_y = joy_y;
+				joy_xy_timeout_counter = current_counter + (Uint64)(needed_timeout_s * 1000.0f);
+				return 0; // cancel other input.
+			}
+#else
 			Uint64 current_counter = SDL_GetPerformanceCounter();
 			if (current_counter > joy_xy_timeout_counter) {
 				menu_control_x = joy_x;
@@ -2227,6 +2255,7 @@ int key_test_paused_menu(int key) {
 				joy_xy_timeout_counter = current_counter + (Uint64)((float)SDL_GetPerformanceFrequency() * needed_timeout_s);
 				return 0; // cancel other input.
 			}
+#endif // !__3DS__
 		}
 
 		if (!(joy_button_states[JOYINPUT_A] & KEYSTATE_HELD) && !(joy_button_states[JOYINPUT_Y] & KEYSTATE_HELD) && !(joy_button_states[JOYINPUT_B] & KEYSTATE_HELD)) {
@@ -2466,12 +2495,14 @@ void menu_was_closed(void) {
 		were_settings_changed = false;
 	}
 	// In fullscreen mode, hide the mouse cursor (because it is only needed in the menu).
+#ifndef __3DS__ // window_ and SDL_GetWindowFlags are SDL2-only; 3DS is always fullscreen
 	dword flags = SDL_GetWindowFlags(window_);
 	if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) {
 		SDL_ShowCursor(SDL_DISABLE);
 	} else {
 		SDL_ShowCursor(SDL_ENABLE);
 	}
+#endif // !__3DS__
 }
 
 

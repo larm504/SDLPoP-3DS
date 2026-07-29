@@ -31,6 +31,316 @@ The authors of this program may be contacted at https://forum.princed.org
 #undef extern
 #endif
 
+#ifdef __3DS__
+// SDL 1.2 compatibility layer: map SDL2 keyboard API to SDL 1.2 equivalents.
+// SDL 1.2 key arrays are indexed by SDLKey (SDLK_*), not by SDL_Scancode.
+// Each define is guarded with #ifndef so SDL 1.2 headers that already define
+// any of these names (preventing redefinition conflicts and recursive expansion).
+
+// SDL_NUM_SCANCODES sizes the key_states array; SDL 1.2 uses SDLK_LAST for this.
+# ifndef SDL_NUM_SCANCODES
+#  define SDL_NUM_SCANCODES       SDLK_LAST
+# endif
+// SDL_GetKeyboardState (SDL2) -> SDL_GetKeyState (SDL 1.2)
+# ifndef SDL_GetKeyboardState
+#  define SDL_GetKeyboardState    SDL_GetKeyState
+# endif
+// Navigation / cursor keys
+# ifndef SDL_SCANCODE_LEFT
+#  define SDL_SCANCODE_LEFT       SDLK_LEFT
+# endif
+# ifndef SDL_SCANCODE_RIGHT
+#  define SDL_SCANCODE_RIGHT      SDLK_RIGHT
+# endif
+# ifndef SDL_SCANCODE_UP
+#  define SDL_SCANCODE_UP         SDLK_UP
+# endif
+# ifndef SDL_SCANCODE_DOWN
+#  define SDL_SCANCODE_DOWN       SDLK_DOWN
+# endif
+# ifndef SDL_SCANCODE_HOME
+#  define SDL_SCANCODE_HOME       SDLK_HOME
+# endif
+# ifndef SDL_SCANCODE_END
+#  define SDL_SCANCODE_END        SDLK_END
+# endif
+# ifndef SDL_SCANCODE_PAGEUP
+#  define SDL_SCANCODE_PAGEUP     SDLK_PAGEUP
+# endif
+# ifndef SDL_SCANCODE_PAGEDOWN
+#  define SDL_SCANCODE_PAGEDOWN   SDLK_PAGEDOWN
+# endif
+# ifndef SDL_SCANCODE_CLEAR
+#  define SDL_SCANCODE_CLEAR      SDLK_CLEAR
+# endif
+# ifndef SDL_SCANCODE_INSERT
+#  define SDL_SCANCODE_INSERT     SDLK_INSERT
+# endif
+# ifndef SDL_SCANCODE_DELETE
+#  define SDL_SCANCODE_DELETE     SDLK_DELETE
+# endif
+// Common keys
+# ifndef SDL_SCANCODE_RETURN
+#  define SDL_SCANCODE_RETURN     SDLK_RETURN
+# endif
+# ifndef SDL_SCANCODE_ESCAPE
+#  define SDL_SCANCODE_ESCAPE     SDLK_ESCAPE
+# endif
+# ifndef SDL_SCANCODE_BACKSPACE
+#  define SDL_SCANCODE_BACKSPACE  SDLK_BACKSPACE
+# endif
+# ifndef SDL_SCANCODE_SPACE
+#  define SDL_SCANCODE_SPACE      SDLK_SPACE
+# endif
+# ifndef SDL_SCANCODE_TAB
+#  define SDL_SCANCODE_TAB        SDLK_TAB
+# endif
+# ifndef SDL_SCANCODE_GRAVE
+#  define SDL_SCANCODE_GRAVE      SDLK_BACKQUOTE
+# endif
+// Modifier / lock keys
+# ifndef SDL_SCANCODE_LSHIFT
+#  define SDL_SCANCODE_LSHIFT     SDLK_LSHIFT
+# endif
+# ifndef SDL_SCANCODE_RSHIFT
+#  define SDL_SCANCODE_RSHIFT     SDLK_RSHIFT
+# endif
+# ifndef SDL_SCANCODE_LCTRL
+#  define SDL_SCANCODE_LCTRL      SDLK_LCTRL
+# endif
+# ifndef SDL_SCANCODE_RCTRL
+#  define SDL_SCANCODE_RCTRL      SDLK_RCTRL
+# endif
+# ifndef SDL_SCANCODE_LALT
+#  define SDL_SCANCODE_LALT       SDLK_LALT
+# endif
+# ifndef SDL_SCANCODE_RALT
+#  define SDL_SCANCODE_RALT       SDLK_RALT
+# endif
+# ifndef SDL_SCANCODE_LGUI
+#  define SDL_SCANCODE_LGUI       SDLK_LSUPER
+# endif
+# ifndef SDL_SCANCODE_RGUI
+#  define SDL_SCANCODE_RGUI       SDLK_RSUPER
+# endif
+# ifndef SDL_SCANCODE_CAPSLOCK
+#  define SDL_SCANCODE_CAPSLOCK   SDLK_CAPSLOCK
+# endif
+# ifndef SDL_SCANCODE_SCROLLLOCK
+#  define SDL_SCANCODE_SCROLLLOCK SDLK_SCROLLOCK   // note: SDL 1.2 spells it SCROLLOCK
+# endif
+# ifndef SDL_SCANCODE_NUMLOCKCLEAR
+#  define SDL_SCANCODE_NUMLOCKCLEAR SDLK_NUMLOCK
+# endif
+# ifndef SDL_SCANCODE_APPLICATION
+#  define SDL_SCANCODE_APPLICATION  SDLK_MENU
+# endif
+# ifndef SDL_SCANCODE_PRINTSCREEN
+#  define SDL_SCANCODE_PRINTSCREEN  SDLK_PRINT
+# endif
+# ifndef SDL_SCANCODE_PAUSE
+#  define SDL_SCANCODE_PAUSE        SDLK_PAUSE
+# endif
+// Multimedia keys: no SDL 1.2 equivalents; use unused slots in SDLK range (297-299)
+// so case labels in the event switch remain unique and within key_states bounds.
+# ifndef SDL_SCANCODE_VOLUMEUP
+#  define SDL_SCANCODE_VOLUMEUP   297
+# endif
+# ifndef SDL_SCANCODE_VOLUMEDOWN
+#  define SDL_SCANCODE_VOLUMEDOWN 298
+# endif
+# ifndef SDL_SCANCODE_MUTE
+#  define SDL_SCANCODE_MUTE       299
+# endif
+# ifndef SDL_SCANCODE_AUDIOMUTE
+#  define SDL_SCANCODE_AUDIOMUTE  SDLK_POWER   // 320; harmless, never fires on 3DS
+# endif
+// Function keys
+# ifndef SDL_SCANCODE_F1
+#  define SDL_SCANCODE_F1         SDLK_F1
+# endif
+# ifndef SDL_SCANCODE_F2
+#  define SDL_SCANCODE_F2         SDLK_F2
+# endif
+# ifndef SDL_SCANCODE_F3
+#  define SDL_SCANCODE_F3         SDLK_F3
+# endif
+# ifndef SDL_SCANCODE_F4
+#  define SDL_SCANCODE_F4         SDLK_F4
+# endif
+# ifndef SDL_SCANCODE_F5
+#  define SDL_SCANCODE_F5         SDLK_F5
+# endif
+# ifndef SDL_SCANCODE_F6
+#  define SDL_SCANCODE_F6         SDLK_F6
+# endif
+# ifndef SDL_SCANCODE_F7
+#  define SDL_SCANCODE_F7         SDLK_F7
+# endif
+# ifndef SDL_SCANCODE_F8
+#  define SDL_SCANCODE_F8         SDLK_F8
+# endif
+# ifndef SDL_SCANCODE_F9
+#  define SDL_SCANCODE_F9         SDLK_F9
+# endif
+# ifndef SDL_SCANCODE_F10
+#  define SDL_SCANCODE_F10        SDLK_F10
+# endif
+# ifndef SDL_SCANCODE_F11
+#  define SDL_SCANCODE_F11        SDLK_F11
+# endif
+# ifndef SDL_SCANCODE_F12
+#  define SDL_SCANCODE_F12        SDLK_F12
+# endif
+// Letter keys: SDL2 uses SDL_SCANCODE_A etc.; SDL 1.2 uses SDLK_a (lowercase ASCII)
+# ifndef SDL_SCANCODE_A
+#  define SDL_SCANCODE_A          SDLK_a
+# endif
+# ifndef SDL_SCANCODE_B
+#  define SDL_SCANCODE_B          SDLK_b
+# endif
+# ifndef SDL_SCANCODE_C
+#  define SDL_SCANCODE_C          SDLK_c
+# endif
+# ifndef SDL_SCANCODE_D
+#  define SDL_SCANCODE_D          SDLK_d
+# endif
+# ifndef SDL_SCANCODE_E
+#  define SDL_SCANCODE_E          SDLK_e
+# endif
+# ifndef SDL_SCANCODE_F
+#  define SDL_SCANCODE_F          SDLK_f
+# endif
+# ifndef SDL_SCANCODE_G
+#  define SDL_SCANCODE_G          SDLK_g
+# endif
+# ifndef SDL_SCANCODE_H
+#  define SDL_SCANCODE_H          SDLK_h
+# endif
+# ifndef SDL_SCANCODE_I
+#  define SDL_SCANCODE_I          SDLK_i
+# endif
+# ifndef SDL_SCANCODE_J
+#  define SDL_SCANCODE_J          SDLK_j
+# endif
+# ifndef SDL_SCANCODE_K
+#  define SDL_SCANCODE_K          SDLK_k
+# endif
+# ifndef SDL_SCANCODE_L
+#  define SDL_SCANCODE_L          SDLK_l
+# endif
+# ifndef SDL_SCANCODE_M
+#  define SDL_SCANCODE_M          SDLK_m
+# endif
+# ifndef SDL_SCANCODE_N
+#  define SDL_SCANCODE_N          SDLK_n
+# endif
+# ifndef SDL_SCANCODE_O
+#  define SDL_SCANCODE_O          SDLK_o
+# endif
+# ifndef SDL_SCANCODE_P
+#  define SDL_SCANCODE_P          SDLK_p
+# endif
+# ifndef SDL_SCANCODE_Q
+#  define SDL_SCANCODE_Q          SDLK_q
+# endif
+# ifndef SDL_SCANCODE_R
+#  define SDL_SCANCODE_R          SDLK_r
+# endif
+# ifndef SDL_SCANCODE_S
+#  define SDL_SCANCODE_S          SDLK_s
+# endif
+# ifndef SDL_SCANCODE_T
+#  define SDL_SCANCODE_T          SDLK_t
+# endif
+# ifndef SDL_SCANCODE_U
+#  define SDL_SCANCODE_U          SDLK_u
+# endif
+# ifndef SDL_SCANCODE_V
+#  define SDL_SCANCODE_V          SDLK_v
+# endif
+# ifndef SDL_SCANCODE_W
+#  define SDL_SCANCODE_W          SDLK_w
+# endif
+# ifndef SDL_SCANCODE_X
+#  define SDL_SCANCODE_X          SDLK_x
+# endif
+# ifndef SDL_SCANCODE_Y
+#  define SDL_SCANCODE_Y          SDLK_y
+# endif
+# ifndef SDL_SCANCODE_Z
+#  define SDL_SCANCODE_Z          SDLK_z
+# endif
+// Keypad keys: SDL 1.2 uses SDLK_KP0..9 (no underscore before digit)
+# ifndef SDL_SCANCODE_KP_0
+#  define SDL_SCANCODE_KP_0       SDLK_KP0
+# endif
+# ifndef SDL_SCANCODE_KP_1
+#  define SDL_SCANCODE_KP_1       SDLK_KP1
+# endif
+# ifndef SDL_SCANCODE_KP_2
+#  define SDL_SCANCODE_KP_2       SDLK_KP2
+# endif
+# ifndef SDL_SCANCODE_KP_3
+#  define SDL_SCANCODE_KP_3       SDLK_KP3
+# endif
+# ifndef SDL_SCANCODE_KP_4
+#  define SDL_SCANCODE_KP_4       SDLK_KP4
+# endif
+# ifndef SDL_SCANCODE_KP_5
+#  define SDL_SCANCODE_KP_5       SDLK_KP5
+# endif
+# ifndef SDL_SCANCODE_KP_6
+#  define SDL_SCANCODE_KP_6       SDLK_KP6
+# endif
+# ifndef SDL_SCANCODE_KP_7
+#  define SDL_SCANCODE_KP_7       SDLK_KP7
+# endif
+# ifndef SDL_SCANCODE_KP_8
+#  define SDL_SCANCODE_KP_8       SDLK_KP8
+# endif
+# ifndef SDL_SCANCODE_KP_9
+#  define SDL_SCANCODE_KP_9       SDLK_KP9
+# endif
+# ifndef SDL_SCANCODE_KP_MINUS
+#  define SDL_SCANCODE_KP_MINUS   SDLK_KP_MINUS
+# endif
+# ifndef SDL_SCANCODE_KP_PLUS
+#  define SDL_SCANCODE_KP_PLUS    SDLK_KP_PLUS
+# endif
+# ifndef SDL_SCANCODE_KP_ENTER
+#  define SDL_SCANCODE_KP_ENTER   SDLK_KP_ENTER
+# endif
+# ifndef SDL_SCANCODE_KP_PERIOD
+#  define SDL_SCANCODE_KP_PERIOD  SDLK_KP_PERIOD
+# endif
+# ifndef SDL_SCANCODE_KP_DIVIDE
+#  define SDL_SCANCODE_KP_DIVIDE  SDLK_KP_DIVIDE
+# endif
+# ifndef SDL_SCANCODE_KP_MULTIPLY
+#  define SDL_SCANCODE_KP_MULTIPLY SDLK_KP_MULTIPLY
+# endif
+# ifndef SDL_SCANCODE_KP_EQUALS
+#  define SDL_SCANCODE_KP_EQUALS    SDLK_KP_EQUALS
+# endif
+// Bracket keys (used by debug-cheat position nudge)
+# ifndef SDL_SCANCODE_LEFTBRACKET
+#  define SDL_SCANCODE_LEFTBRACKET  SDLK_LEFTBRACKET
+# endif
+# ifndef SDL_SCANCODE_RIGHTBRACKET
+#  define SDL_SCANCODE_RIGHTBRACKET SDLK_RIGHTBRACKET
+# endif
+// SDL 1.2 enables colorkey with SDL_SRCCOLORKEY (0x1000), not SDL_TRUE (1).
+// Passing SDL_TRUE (1) to the real SDL_SetColorKey silently disables colorkey
+// because 1 & SDL_SRCCOLORKEY == 0. Wrap to translate any truthy flag correctly.
+# ifndef SDL_SetColorKey
+static inline int SDL_SetColorKey_3ds(SDL_Surface *s, int flag, Uint32 key) {
+    return (SDL_SetColorKey)(s, flag ? SDL_SRCCOLORKEY : 0, key);
+}
+#  define SDL_SetColorKey SDL_SetColorKey_3ds
+# endif
+#endif // __3DS__
+
 // data:5F8A
 extern word text_time_remaining;
 // data:4C56
@@ -622,6 +932,7 @@ extern byte edge_type;
 extern SDL_Surface* onscreen_surface_;
 extern SDL_Surface* overlay_surface;
 extern SDL_Surface* merged_surface;
+#ifndef __3DS__
 extern SDL_Renderer* renderer_;
 extern bool is_renderer_targettexture_supported;
 extern SDL_Window* window_;
@@ -630,8 +941,11 @@ extern SDL_Texture* texture_sharp;
 extern SDL_Texture* texture_fuzzy;
 extern SDL_Texture* texture_blurry;
 extern SDL_Texture* target_texture;
+#endif // !__3DS__
 
+#ifndef __3DS__
 extern SDL_GameController* sdl_controller_ INIT( = 0 );
+#endif // !__3DS__
 extern SDL_Joystick* sdl_joystick_; // in case our joystick is not compatible with SDL_GameController
 extern byte using_sdl_joystick_interface;
 extern int joy_axis[JOY_AXIS_NUM]; // hor/ver axes for left/right sticks + left and right triggers (in total 6 axes)
@@ -639,7 +953,9 @@ extern int joy_axis_max[JOY_AXIS_NUM]; // Same as above, but stores the highest 
 extern int joy_left_stick_states[2]; // horizontal, vertical
 extern int joy_right_stick_states[2];
 extern int joy_button_states[JOYINPUT_NUM];
+#ifndef __3DS__
 extern SDL_Haptic* sdl_haptic;
+#endif // !__3DS__
 
 extern Uint64 perf_counters_per_tick;
 extern Uint64 perf_frequency;

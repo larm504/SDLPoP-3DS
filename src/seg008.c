@@ -962,18 +962,28 @@ SDL_Surface* hflip(SDL_Surface* input) {
 
 	// The simplest way to create a surface with same format as input:
 	SDL_Surface* output = SDL_ConvertSurface(input, input->format, 0);
+#ifdef __3DS__
+	SDL_SetPalette(output, SDL_LOGPAL | SDL_PHYSPAL, input->format->palette->colors, 0, input->format->palette->ncolors);
+#else
 	SDL_SetSurfacePalette(output, input->format->palette);
+#endif
 	// The copied image will be overwritten anyway.
 	if (output == NULL) {
 		sdlperror("hflip: SDL_ConvertSurface");
 		quit(1);
 	}
 
+#ifndef __3DS__
 	SDL_SetSurfaceBlendMode(input, SDL_BLENDMODE_NONE);
+#endif
 	// Temporarily turn off alpha and colorkey on input. So we overwrite the output image.
 	SDL_SetColorKey(input, SDL_FALSE, 0);
 	SDL_SetColorKey(output, SDL_FALSE, 0);
+#ifdef __3DS__
+	SDL_SetAlpha(input, SDL_SRCALPHA, 255);
+#else
 	SDL_SetSurfaceAlphaMod(input, 255);
+#endif
 
 	for (int source_x = 0, target_x = width-1; source_x < width; ++source_x, --target_x) {
 		SDL_Rect srcrect = {source_x, 0, 1, height};

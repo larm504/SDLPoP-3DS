@@ -672,7 +672,11 @@ int process_key() {
 		{
 			SDL_version verc, verl;
 			SDL_VERSION (&verc);
+#ifdef __3DS__
+			verl = verc; // SDL 1.2 has no SDL_GetVersion(); compile-time == link-time for static libs
+#else
 			SDL_GetVersion (&verl);
+#endif
 			snprintf (sprintf_temp, sizeof (sprintf_temp),
 				"SDL COMP v%u.%u.%u LINK v%u.%u.%u",
 				verc.major, verc.minor, verc.patch,
@@ -1357,15 +1361,19 @@ void get_joystick_state_hor_only(int raw_x, int axis_state[2]) {
 // seg000:1051
 void read_joyst_control() {
 	int key_state;
-	int* joy_axis_ptr;
 	if (fixes->fix_register_quick_input) {
 		key_state = KEYSTATE_HELD | KEYSTATE_HELD_NEW;
-		joy_axis_ptr = joy_axis_max;
 	} else {
 		key_state = KEYSTATE_HELD;
-		joy_axis_ptr = joy_axis;
 	}
 
+#ifndef __3DS__ // SDL_CONTROLLER_AXIS_* are SDL2 GameController API
+	int* joy_axis_ptr;
+	if (fixes->fix_register_quick_input) {
+		joy_axis_ptr = joy_axis_max;
+	} else {
+		joy_axis_ptr = joy_axis;
+	}
 	if (joystick_only_horizontal) {
 		get_joystick_state_hor_only(joy_axis_ptr[SDL_CONTROLLER_AXIS_LEFTX], joy_left_stick_states);
 		get_joystick_state_hor_only(joy_axis_ptr[SDL_CONTROLLER_AXIS_RIGHTX], joy_right_stick_states);
@@ -1373,6 +1381,7 @@ void read_joyst_control() {
 		get_joystick_state(joy_axis_ptr[SDL_CONTROLLER_AXIS_LEFTX], joy_axis_ptr[SDL_CONTROLLER_AXIS_LEFTY], joy_left_stick_states);
 		get_joystick_state(joy_axis_ptr[SDL_CONTROLLER_AXIS_RIGHTX], joy_axis_ptr[SDL_CONTROLLER_AXIS_RIGHTY], joy_right_stick_states);
 	}
+#endif // !__3DS__
 
 	if (joy_left_stick_states[0] == -1 || joy_right_stick_states[0] == -1 || joy_button_states[JOYINPUT_DPAD_LEFT] & key_state)
 		control_x = CONTROL_HELD_LEFT;
@@ -1386,10 +1395,12 @@ void read_joyst_control() {
 	if (joy_left_stick_states[1] == 1 || joy_right_stick_states[1] == 1 || joy_button_states[JOYINPUT_DPAD_DOWN] & key_state || joy_button_states[JOYINPUT_A] & key_state)
 		control_y = CONTROL_HELD_DOWN;
 
-	if (joy_button_states[JOYINPUT_X] & key_state ||
-			joy_axis_ptr[SDL_CONTROLLER_AXIS_TRIGGERLEFT] > 8000 ||
-			joy_axis_ptr[SDL_CONTROLLER_AXIS_TRIGGERRIGHT] > 8000)
-	{
+	if (joy_button_states[JOYINPUT_X] & key_state
+#ifndef __3DS__
+			|| joy_axis_ptr[SDL_CONTROLLER_AXIS_TRIGGERLEFT] > 8000
+			|| joy_axis_ptr[SDL_CONTROLLER_AXIS_TRIGGERRIGHT] > 8000
+#endif
+	) {
 		control_shift = CONTROL_HELD;
 	}
 
@@ -2054,8 +2065,14 @@ void transition_ltr() {
 	extern int audio_speed;
 	transition_fps *= audio_speed;
 #endif
+#ifdef __3DS__
+	// SDL 1.2 has no performance counter; use SDL_GetTicks() (milliseconds).
+	Uint64 counters_per_frame = 1000 / transition_fps;
+	last_transition_counter = (Uint64)SDL_GetTicks();
+#else
 	Uint64 counters_per_frame = perf_frequency / transition_fps;
 	last_transition_counter = SDL_GetPerformanceCounter();
+#endif
 	int overshoot = 0;
 	for (short position = 0; position < 320; position += 2) {
 		method_1_blit_rect(onscreen_surface_, offscreen_surface, &rect, &rect, 0);
@@ -2069,7 +2086,11 @@ void transition_ltr() {
 		do_paused();
 		// Add an appropriate delay until the next frame, so that the animation isn't instantaneous on fast CPUs.
 		for (;;) {
+#ifdef __3DS__
+			Uint64 current_counter = (Uint64)SDL_GetTicks();
+#else
 			Uint64 current_counter = SDL_GetPerformanceCounter();
+#endif
 			int frametimes_elapsed = (int)((current_counter / counters_per_frame) - (last_transition_counter / counters_per_frame));
 			if (frametimes_elapsed > 0) {
 				overshoot = frametimes_elapsed - 1;
@@ -2308,17 +2329,26 @@ void load_title_images(int bgcolor) {
 			color.r = 0x10;
 			color.g = 0x00;
 			color.b = 0x60;
-			color.a = 0xFF;
+#ifndef __3DS__
+			color.a = 0xFF; // SDL_Color has no 'a' member in SDL 1.2
+#endif
 		} else {
 			// RGB(20h,0,0) = #800000 = dark red
 			set_pal((find_first_pal_row(1<<11) << 4) + 14, 0x20, 0x00, 0x00);
 			color.r = 0x80;
 			color.g = 0x00;
 			color.b = 0x00;
-			color.a = 0xFF;
+#ifndef __3DS__
+			color.a = 0xFF; // SDL_Color has no 'a' member in SDL 1.2
+#endif
 		}
 		if (NULL != chtab_title40) {
+#ifdef __3DS__
+			// SDL 1.2: use SDL_SetPalette instead of SDL_SetPaletteColors
+			SDL_SetPalette(chtab_title40->images[0], SDL_PHYSPAL|SDL_LOGPAL, &color, 14, 1);
+#else
 			SDL_SetPaletteColors(chtab_title40->images[0]->format->palette, &color, 14, 1);
+#endif
 		}
 	} else if (graphics_mode == gmEga || graphics_mode == gmTga) {
 		// ...
@@ -2472,6 +2502,10 @@ const char* get_writable_file_path(char* custom_path_buffer, size_t max_len, con
 	// Otherwise, save to the home directory
 #if defined WIN32 || _WIN32 || WIN64 || _WIN64
 	const char* save_path = getenv("SDLPOP_SAVE_PATH");
+#elif defined __3DS__
+	// romfs is read-only; write saves to a dedicated directory on the SD card.
+	char save_path[POP_MAX_PATH];
+	snprintf_check(save_path, max_len, "sdmc:/SDLPoP");
 #else
 	char save_path[POP_MAX_PATH];
 	const char* custom_save_path = getenv("SDLPOP_SAVE_PATH");
@@ -2480,6 +2514,8 @@ const char* get_writable_file_path(char* custom_path_buffer, size_t max_len, con
 		snprintf_check(save_path, max_len, "%s", custom_save_path);
 	else if (home_path != NULL && home_path[0] != '\0')
 		snprintf_check(save_path, max_len, "%s/.%s", home_path, POP_DIR_NAME);
+	else
+		save_path[0] = '\0';
 #endif
 
 	if (save_path != NULL && save_path[0] != '\0') {

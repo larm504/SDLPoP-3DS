@@ -767,6 +767,7 @@ int flash_if_hurt() {
 		do_flash(flash_color);
 		return 1;
 	} else if (hitp_delta < 0) {
+#ifndef __3DS__
 		if (is_joyst_mode && enable_controller_rumble) {
 			if (sdl_haptic != NULL) {
 				SDL_HapticRumblePlay(sdl_haptic, 1.0, 100); // rumble at full strength for 100 milliseconds
@@ -778,6 +779,7 @@ int flash_if_hurt() {
 #endif
 			}
 		}
+#endif // !__3DS__
 		do_flash(color_12_brightred); // red
 		return 1;
 	}

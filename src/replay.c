@@ -305,7 +305,9 @@ void start_with_replay_file(const char *filename) {
 			if (is_validate_mode) // Validating replays is cmd-line only, so, no sense continuing from here.
 				exit(0);
 
+#ifndef __3DS__
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "SDLPoP", error_message, NULL);
+#endif
 			return;
 		}
 		if (header.uses_custom_levelset) {

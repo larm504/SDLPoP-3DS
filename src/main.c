@@ -20,6 +20,10 @@ The authors of this program may be contacted at https://forum.princed.org
 
 #include "common.h"
 
+#ifdef __3DS__
+#include <3ds.h>
+#endif
+
 
 #ifdef __amigaos4__
 static const char version[] = "\0$VER: SDLPoP " SDLPOP_VERSION " (" __AMIGADATE__ ")";
@@ -35,9 +39,22 @@ int main(int argc, char *argv[])
 	#ifdef __PSP__
 	scePowerSetClockFrequency(333,333,166);
 	#endif
+	#ifdef __3DS__
+	romfsInit();
+	chdir("romfs:/"); // set CWD so "data/..." file opens resolve inside romfs
+	// Redirect stdout/stderr to files on the SD card.
+	// This lets us read printf output and error messages after a crash.
+	mkdir("sdmc:/SDLPoP", 0700);
+	freopen("sdmc:/SDLPoP/stdout.txt", "w", stdout);
+	freopen("sdmc:/SDLPoP/stderr.txt", "w", stderr);
+	printf("SDLPoP starting up\n"); fflush(stdout);
+	#endif
 	g_argc = argc;
 	g_argv = argv;
 	pop_main();
+	#ifdef __3DS__
+	romfsExit();
+	#endif
 	return 0;
 }
 
