@@ -2084,7 +2084,11 @@ int need_full_menu_redraw_count;
 void draw_menu() {
 	escape_key_suppressed = (key_states[SDL_SCANCODE_BACKSPACE] & KEYSTATE_HELD || key_states[SDL_SCANCODE_ESCAPE] & KEYSTATE_HELD);
 	surface_type* saved_target_surface = current_target_surface;
+#ifdef __3DS__
+	current_target_surface = onscreen_surface_;
+#else
 	current_target_surface = overlay_surface;
+#endif
 
 	need_close_menu = false;
 	while (!need_close_menu) {
@@ -2157,6 +2161,9 @@ void draw_menu() {
 	}
 
 	current_target_surface = saved_target_surface;
+#ifdef __3DS__
+	need_full_redraw = 1;
+#endif
 }
 
 void clear_menu_controls() {

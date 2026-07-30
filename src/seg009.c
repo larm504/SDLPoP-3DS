@@ -3238,15 +3238,23 @@ void draw_rect_with_alpha(const rect_type* rect, byte color, byte alpha) {
 }
 
 void draw_rect_contours(const rect_type* rect, byte color) {
+	SDL_Rect dest_rect;
+	rect_to_sdlrect(rect, &dest_rect);
+	rgb_type palette_color = palette[color];
+#ifdef __3DS__
+	if (current_target_surface->format->BitsPerPixel != 16) {
+		printf("draw_rect_contours: not implemented for %d bit surfaces\n", current_target_surface->format->BitsPerPixel);
+		return;
+	}
+	uint32_t rgb_color = SDL_MapRGB(current_target_surface->format, palette_color.r<<2, palette_color.g<<2, palette_color.b<<2);
+#else
 	// TODO: handle 24 bit surfaces? (currently, 32 bit surface is assumed)
 	if (current_target_surface->format->BitsPerPixel != 32) {
 		printf("draw_rect_contours: not implemented for %d bit surfaces\n", current_target_surface->format->BitsPerPixel);
 		return;
 	}
-	SDL_Rect dest_rect;
-	rect_to_sdlrect(rect, &dest_rect);
-	rgb_type palette_color = palette[color];
 	uint32_t rgb_color = SDL_MapRGBA(overlay_surface->format, palette_color.r<<2, palette_color.g<<2, palette_color.b<<2, 0xFF);
+#endif
 	if (SDL_LockSurface(current_target_surface) != 0) {
 		sdlperror("draw_rect_contours: SDL_LockSurface");
 		quit(1);
@@ -3258,6 +3266,22 @@ void draw_rect_contours(const rect_type* rect, byte color) {
 	int xmax = MIN(dest_rect.x + dest_rect.w, current_target_surface->w);
 	int ymin = MIN(dest_rect.y,               current_target_surface->h);
 	int ymax = MIN(dest_rect.y + dest_rect.h, current_target_surface->h);
+#ifdef __3DS__
+	byte* row = pixels + ymin*pitch;
+	uint16_t* pixel = (uint16_t*)(row + xmin*bytes_per_pixel);
+	for (int x = xmin; x < xmax; ++x) {
+		*pixel++ = (uint16_t)rgb_color;
+	}
+	for (int y = ymin+1; y < ymax-1; ++y) {
+		row += pitch;
+		*(uint16_t*)(row + xmin*bytes_per_pixel)       = (uint16_t)rgb_color;
+		*(uint16_t*)(row + (xmax-1)*bytes_per_pixel)   = (uint16_t)rgb_color;
+	}
+	pixel = (uint16_t*)(pixels + (ymax-1)*pitch + xmin*bytes_per_pixel);
+	for (int x = xmin; x < xmax; ++x) {
+		*pixel++ = (uint16_t)rgb_color;
+	}
+#else
 	byte* row = pixels + ymin*pitch;
 	uint32_t* pixel =  (uint32_t*) (row + xmin*bytes_per_pixel);
 	for (int x = xmin; x < xmax; ++x) {
@@ -3272,7 +3296,7 @@ void draw_rect_contours(const rect_type* rect, byte color) {
 	for (int x = xmin; x < xmax; ++x) {
 		*pixel++ = rgb_color;
 	}
-
+#endif
 	SDL_UnlockSurface(current_target_surface);
 }
 
