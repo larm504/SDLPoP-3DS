@@ -3218,11 +3218,21 @@ void draw_rect_with_alpha(const rect_type* rect, byte color, byte alpha) {
 	SDL_Rect dest_rect;
 	rect_to_sdlrect(rect, &dest_rect);
 	rgb_type palette_color = palette[color];
+#ifdef __3DS__
+	// overlay_surface is not initialized on 3DS. Use current_target_surface's format
+	// and ignore alpha (SDL 1.2 16-bit surfaces don't support per-pixel alpha fills).
+	// alpha==0 means fully transparent (draw nothing).
+	if (alpha == 0) return;
+	uint32_t rgb_color = SDL_MapRGB(current_target_surface->format,
+		palette_color.r<<2, palette_color.g<<2, palette_color.b<<2);
+	safe_SDL_FillRect(current_target_surface, &dest_rect, rgb_color);
+#else
 	uint32_t rgb_color = SDL_MapRGBA(overlay_surface->format, palette_color.r<<2, palette_color.g<<2, palette_color.b<<2, alpha);
 	if (safe_SDL_FillRect(current_target_surface, &dest_rect, rgb_color) != 0) {
 		sdlperror("draw_rect_with_alpha: SDL_FillRect");
 		quit(1);
 	}
+#endif
 }
 
 void draw_rect_contours(const rect_type* rect, byte color) {
@@ -3546,9 +3556,8 @@ void process_events() {
 			{ KEY_A | KEY_R,               SDL_SCANCODE_LSHIFT    }, // action (A or R shoulder)
 			{ KEY_B,                       SDL_SCANCODE_RSHIFT    }, // also action
 			{ KEY_X,                       SDL_SCANCODE_RETURN    }, // confirm/continue
-			{ KEY_Y,                       SDL_SCANCODE_BACKSPACE }, // pause menu
-			{ KEY_START,                   SDL_SCANCODE_ESCAPE    }, // pause
-			{ KEY_SELECT,                  SDL_SCANCODE_BACKSPACE }, // also pause menu
+			{ KEY_Y,                       SDL_SCANCODE_ESCAPE    }, // pause (Start exits via HBL; use Y instead)
+			{ KEY_SELECT,                  SDL_SCANCODE_BACKSPACE }, // pause menu / back
 			{ KEY_L,                       SDL_SCANCODE_SPACE     }, // show timer
 		};
 		for (int i = 0; i < (int)(sizeof(map)/sizeof(map[0])); i++) {
