@@ -1601,8 +1601,8 @@ void draw_setting(setting_type* setting, rect_type* parent, int* y_offset, int i
 
 		SDL_Rect dest_rect;
 		rect_to_sdlrect(&setting_box, &dest_rect);
-		uint32_t rgb_color = SDL_MapRGBA(overlay_surface->format, 55, 55, 55, 255);
-		if (SDL_FillRect(overlay_surface, &dest_rect, rgb_color) != 0) {
+		uint32_t rgb_color = SDL_MapRGB(current_target_surface->format, 55, 55, 55);
+		if (SDL_FillRect(current_target_surface, &dest_rect, rgb_color) != 0) {
 			sdlperror("draw_setting: SDL_FillRect");
 			quit(1);
 		}
@@ -1988,8 +1988,8 @@ void draw_confirmation_dialog(int which_dialog, const char* text) {
 		if (highlighted_button != old_highlighted_button) {
 			old_highlighted_button = highlighted_button;
 			// Need to redraw the dialog box.
-			uint32_t clear_color = SDL_MapRGBA(current_target_surface->format, 0, 0, 0, 255);
-			SDL_FillRect(overlay_surface, NULL, clear_color);
+			uint32_t clear_color = SDL_MapRGB(current_target_surface->format, 0, 0, 0);
+			SDL_FillRect(current_target_surface, NULL, clear_color);
 			draw_rect(&copyprot_dialog->peel_rect, color_0_black);
 			dialog_method_2_frame(copyprot_dialog);
 			rect_type rect;
@@ -2053,8 +2053,8 @@ void draw_select_level_dialog(void) {
 
 			old_edited_level_number = menu_current_level;
 			// Need to redraw the dialog box.
-			uint32_t clear_color = SDL_MapRGBA(current_target_surface->format, 0, 0, 0, 255);
-			SDL_FillRect(overlay_surface, NULL, clear_color);
+			uint32_t clear_color = SDL_MapRGB(current_target_surface->format, 0, 0, 0);
+			SDL_FillRect(current_target_surface, NULL, clear_color);
 			draw_rect(&copyprot_dialog->peel_rect, color_0_black);
 			dialog_method_2_frame(copyprot_dialog);
 			rect_type rect;
