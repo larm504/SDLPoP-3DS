@@ -3115,7 +3115,9 @@ image_type* method_3_blit_mono(image_type* image,int xpos,int ypos,int blitter,b
 		quit(1);
 	}
 #ifdef __3DS__
-	SDL_Surface* colored_image = SDL_DisplayFormatAlpha(image);
+	SDL_Surface* colored_image = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, Rmsk, Gmsk, Bmsk, Amsk);
+	if (colored_image == NULL) { sdlperror("method_3_blit_mono: SDL_CreateRGBSurface"); return image; }
+	SDL_BlitSurface(image, NULL, colored_image, NULL);
 #else
 	SDL_Surface* colored_image = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_ARGB8888, 0);
 	SDL_SetSurfaceBlendMode(colored_image, SDL_BLENDMODE_NONE);
@@ -3332,7 +3334,10 @@ void draw_colored_torch(int color, SDL_Surface* image, int xpos, int ypos) {
 	}
 
 #ifdef __3DS__
-	SDL_Surface* colored_image = SDL_DisplayFormatAlpha(image);
+	int w2 = image->w, h2 = image->h;
+	SDL_Surface* colored_image = SDL_CreateRGBSurface(SDL_SWSURFACE, w2, h2, 32, Rmsk, Gmsk, Bmsk, Amsk);
+	if (colored_image == NULL) { sdlperror("draw_colored_torch: SDL_CreateRGBSurface"); return; }
+	SDL_BlitSurface(image, NULL, colored_image, NULL);
 #else
 	SDL_Surface* colored_image = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_ARGB8888, 0);
 	SDL_SetSurfaceBlendMode(colored_image, SDL_BLENDMODE_NONE);
