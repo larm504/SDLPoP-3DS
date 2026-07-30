@@ -3534,6 +3534,7 @@ void process_events() {
 	// SDL_KEYDOWN/UP events for hardware buttons. Read HID state directly and update
 	// key_states[] (indexed by SDLK_* via our SDL_SCANCODE_* compat macros).
 	{
+		if (aptShouldClose()) quit(0); // HOME menu "Close Software" or power-off signal
 		hidScanInput();
 		u32 kDown = hidKeysDown();
 		u32 kHeld = hidKeysHeld();
@@ -3565,6 +3566,10 @@ void process_events() {
 		}
 		fflush(stdout); // flush log file each tick so output survives crashes
 	}
+	// 3DS reads HID directly above; SDL_PollEvent calls N3DS_PumpEvents which calls
+	// aptMainLoop() and fires a spurious SDL_QUIT for certain button presses in Azahar HLE.
+	// Skip SDL event processing entirely on 3DS and handle app close ourselves via aptShouldClose().
+	return;
 #endif
 	// Process all events in the queue.
 	// Previously, this procedure would wait for *one* event and process it, then return.
