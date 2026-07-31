@@ -2559,6 +2559,106 @@ void init_overlay(void) {
 
 SDL_Surface* onscreen_surface_2x;
 
+#ifdef __3DS__
+static SDL_Surface* bottom_sw_ = NULL; // software render target for HUD
+static SDL_Surface* hud_border_ = NULL;
+
+static void init_bottom_screen(void) {
+	// Set the bottom LCD to RGB565 to match our software surface.
+	// We never call SDL_SetVideoMode for the bottom screen — doing so would
+	// invalidate the top screen surface that SDL already returned.
+	gfxSetScreenFormat(GFX_BOTTOM, GSP_RGB565_OES);
+
+	// RGB565 masks (little-endian ARM, matches 3DS framebuffer bit layout)
+	bottom_sw_ = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16,
+	                                  0xF800, 0x07E0, 0x001F, 0);
+
+	// Load the title screen decorative border (320x200); blit centered in 320x240.
+	hud_border_ = IMG_Load("data/TITLE/res41.png");
+	if (hud_border_ != NULL) {
+		// Treat pure black as transparent so background shows through the frame.
+		SDL_SetColorKey(hud_border_, SDL_SRCCOLORKEY,
+		                SDL_MapRGB(hud_border_->format, 0, 0, 0));
+	}
+}
+
+static void hud_draw_text(int top, int left, int bottom_y, int right,
+                          int x_align, int y_align, const char* text, int color) {
+	rect_type r = {(short)top, (short)left, (short)bottom_y, (short)right};
+	show_text_with_color(&r, x_align, y_align, text, color);
+}
+
+void update_bottom_screen(void) {
+	if (bottom_sw_ == NULL) return;
+	if (current_target_surface == NULL) return;
+
+	// Fill background regardless of font state so the screen is never blank.
+	SDL_FillRect(bottom_sw_, NULL, SDL_MapRGB(bottom_sw_->format, 12, 8, 18));
+
+	if (hud_border_ != NULL) {
+		SDL_Rect dst = {0, 20, 320, 200};
+		SDL_BlitSurface(hud_border_, NULL, bottom_sw_, &dst);
+	}
+
+	// Only draw text once fonts are loaded.
+	if (hc_small_font.chtab != NULL) {
+		surface_type* saved_target = current_target_surface;
+		current_target_surface = bottom_sw_;
+		font_type* saved_font = textstate.ptr_font;
+		textstate.ptr_font = &hc_small_font;
+
+		hud_draw_text(42, 20, 52, 148, halign_center, valign_top, "CONTROLS", color_14_brightyellow);
+		typedef struct { const char* btn; const char* act; } ctrl_row;
+		static const ctrl_row controls[] = {
+			{ "D-pad", "Move"      },
+			{ "A / R", "Step"      },
+			{ "B",     "Jump"      },
+			{ "X",     "OK"        },
+			{ "Y/Sel", "Cancel"    },
+			{ "L",     "Time left" },
+		};
+		for (int i = 0; i < 6; ++i) {
+			int y = 57 + i * 17;
+			hud_draw_text(y, 22,  y+10, 78,  halign_left, valign_top, controls[i].btn, color_11_brightcyan);
+			hud_draw_text(y, 80,  y+10, 148, halign_left, valign_top, controls[i].act, color_15_brightwhite);
+		}
+
+		hud_draw_text(42, 172, 52, 306, halign_center, valign_top, "STATUS", color_14_brightyellow);
+		char buf[32];
+		snprintf(buf, sizeof(buf), "Level: %d", (int)current_level);
+		hud_draw_text(57,  172, 67,  306, halign_left, valign_top, buf, color_15_brightwhite);
+		snprintf(buf, sizeof(buf), "HP: %d / %d", (int)hitp_curr, (int)hitp_max);
+		hud_draw_text(73,  172, 83,  306, halign_left, valign_top, buf, color_15_brightwhite);
+		int display_min = rem_min > 0 ? rem_min - 1 : 0;
+		int display_sec = rem_tick / 12;
+		snprintf(buf, sizeof(buf), "Time: %d:%02d", display_min, display_sec);
+		hud_draw_text(89,  172, 99,  306, halign_left, valign_top, buf, color_15_brightwhite);
+
+		textstate.ptr_font = saved_font;
+		current_target_surface = saved_target;
+	}
+
+	// Copy software surface to 3DS bottom framebuffer with coordinate transposition.
+	// The 3DS bottom LCD is 320x240 in display space but framebuffer is column-major:
+	// display pixel (x,y) lives at fb[(x*240 + (239-y)) * 2].
+	u8* fb = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+	if (fb != NULL) {
+		for (int y = 0; y < 240; y++) {
+			const Uint16* row = (const Uint16*)((const u8*)bottom_sw_->pixels + y * bottom_sw_->pitch);
+			for (int x = 0; x < 320; x++) {
+				Uint16 px = row[x];
+				int idx = (x * 240 + (239 - y)) * 2;
+				fb[idx + 0] = (u8)(px);
+				fb[idx + 1] = (u8)(px >> 8);
+			}
+		}
+		gfxFlushBuffers();
+		// SDL_Flip only swaps the top screen surface; explicitly swap bottom.
+		gfxScreenSwapBuffers(GFX_BOTTOM, false);
+	}
+}
+#endif
+
 void init_scaling(void) {
 #ifndef __3DS__
 	// Don't crash in validate mode.
@@ -2612,12 +2712,7 @@ void set_gr_mode(byte grmode) {
 		sdlperror("set_gr_mode: SDL_SetVideoMode");
 		quit(1);
 	}
-	// Clear the bottom screen to black so it doesn't show garbage.
-	SDL_Surface* bot = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE | SDL_BOTTOMSCR);
-	if (bot != NULL) {
-		SDL_FillRect(bot, NULL, 0);
-		SDL_Flip(bot);
-	}
+	init_bottom_screen();
 #else
 #ifdef SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING
 	SDL_SetHint(SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING, "1");
@@ -2839,6 +2934,7 @@ void update_screen() {
 #ifdef __3DS__
 	// SDL 1.2: flip the screen surface directly
 	SDL_Flip(surface);
+	update_bottom_screen();
 #else
 	init_scaling();
 	if (scaling_type == 1) {
