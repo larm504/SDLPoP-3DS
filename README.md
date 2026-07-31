@@ -78,7 +78,7 @@ On crash or unexpected behavior, check the log files written to the SD card:
 ## Credits
 
 - Original SDLPoP by [NagyD](https://github.com/NagyD/SDLPoP) and contributors — see [README-upstream.md](README-upstream.md) for the full list
-- 3DS port by [larsssmoatsss](https://github.com/larsssmoatsss)
+- 3DS port by [larm504](https://github.com/larm504)
 
 ## License
 
