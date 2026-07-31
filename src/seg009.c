@@ -2607,32 +2607,33 @@ void update_bottom_screen(void) {
 		font_type* saved_font = textstate.ptr_font;
 		textstate.ptr_font = &hc_small_font;
 
-		hud_draw_text(42, 20, 52, 148, halign_center, valign_top, "CONTROLS", color_14_brightyellow);
+		hud_draw_text(40, 20, 50, 148, halign_center, valign_top, "CONTROLS", color_14_brightyellow);
 		typedef struct { const char* btn; const char* act; } ctrl_row;
 		static const ctrl_row controls[] = {
-			{ "D-pad", "Move"      },
-			{ "A / R", "Step"      },
-			{ "B",     "Jump"      },
-			{ "X",     "OK"        },
-			{ "Y/Sel", "Cancel"    },
-			{ "L",     "Time left" },
+			{ "D-pad",  "Move"      },
+			{ "A / R",  "Step"      },
+			{ "B",      "Jump"      },
+			{ "Up",     "Jump (alt)"},
+			{ "X",      "OK"        },
+			{ "Y/Sel",  "Cancel"    },
+			{ "Start",  "Pause"     },
 		};
-		for (int i = 0; i < 6; ++i) {
-			int y = 57 + i * 17;
+		for (int i = 0; i < 7; ++i) {
+			int y = 55 + i * 19;
 			hud_draw_text(y, 22,  y+10, 78,  halign_left, valign_top, controls[i].btn, color_11_brightcyan);
 			hud_draw_text(y, 80,  y+10, 148, halign_left, valign_top, controls[i].act, color_15_brightwhite);
 		}
 
-		hud_draw_text(42, 172, 52, 306, halign_center, valign_top, "STATUS", color_14_brightyellow);
+		hud_draw_text(40, 172, 50, 306, halign_center, valign_top, "STATUS", color_14_brightyellow);
 		char buf[32];
 		snprintf(buf, sizeof(buf), "Level: %d", (int)current_level);
-		hud_draw_text(57,  172, 67,  306, halign_left, valign_top, buf, color_15_brightwhite);
+		hud_draw_text(55,  172, 65,  306, halign_left, valign_top, buf, color_15_brightwhite);
 		snprintf(buf, sizeof(buf), "HP: %d / %d", (int)hitp_curr, (int)hitp_max);
-		hud_draw_text(73,  172, 83,  306, halign_left, valign_top, buf, color_15_brightwhite);
+		hud_draw_text(98,  172, 108, 306, halign_left, valign_top, buf, color_15_brightwhite);
 		int display_min = rem_min > 0 ? rem_min - 1 : 0;
 		int display_sec = rem_tick / 12;
 		snprintf(buf, sizeof(buf), "Time: %d:%02d", display_min, display_sec);
-		hud_draw_text(89,  172, 99,  306, halign_left, valign_top, buf, color_15_brightwhite);
+		hud_draw_text(141, 172, 151, 306, halign_left, valign_top, buf, color_15_brightwhite);
 
 		textstate.ptr_font = saved_font;
 		current_target_surface = saved_target;

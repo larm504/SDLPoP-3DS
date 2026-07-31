@@ -2452,9 +2452,15 @@ const char* splash_text_2 =
 		"Edit SDLPoP.ini to customize SDLPoP.\n"
 		"Mods also work with SDLPoP.\n"
 		"\n"
+#ifdef __3DS__
+		"Nintendo 3DS port by larm504.\n"
+		"\n"
+#endif
+#ifndef __3DS__
 		"For more information, read README.md.\n"
 		"Questions? Visit https://forum.princed.org\n"
 		"\n"
+#endif
 		"Press any key to continue...";
 
 void show_splash() {
