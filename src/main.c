@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
 	scePowerSetClockFrequency(333,333,166);
 	#endif
 	#ifdef __3DS__
+	osSetSpeedupEnable(true); // run at full 804 MHz on N3DS; no-op on O3DS
 	romfsInit();
 	chdir("romfs:/"); // set CWD so "data/..." file opens resolve inside romfs
 	// Redirect stdout/stderr to files on the SD card.

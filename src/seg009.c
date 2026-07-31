@@ -2612,6 +2612,12 @@ void set_gr_mode(byte grmode) {
 		sdlperror("set_gr_mode: SDL_SetVideoMode");
 		quit(1);
 	}
+	// Clear the bottom screen to black so it doesn't show garbage.
+	SDL_Surface* bot = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE | SDL_BOTTOMSCR);
+	if (bot != NULL) {
+		SDL_FillRect(bot, NULL, 0);
+		SDL_Flip(bot);
+	}
 #else
 #ifdef SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING
 	SDL_SetHint(SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING, "1");
