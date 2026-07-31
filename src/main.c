@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 	#endif
 	#ifdef __3DS__
 	osSetSpeedupEnable(true); // run at full 804 MHz on N3DS; no-op on O3DS
+	APT_SetAppCpuTimeLimit(80); // give app 80% of CPU time (default is 30%)
 	romfsInit();
 	chdir("romfs:/"); // set CWD so "data/..." file opens resolve inside romfs
 	// Redirect stdout/stderr to files on the SD card.

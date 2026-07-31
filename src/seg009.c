@@ -3608,7 +3608,10 @@ void process_events() {
 				last_key_scancode = k; // feeds read_key() / menu navigation
 			}
 		}
-		fflush(stdout); // flush log file each tick so output survives crashes
+		// Flush log once per second (~60 ticks) instead of every frame —
+		// constant SD card writes at 60Hz hurt O3DS performance significantly.
+		static int flush_ticker = 0;
+		if (++flush_ticker >= 60) { fflush(stdout); flush_ticker = 0; }
 	}
 	// 3DS reads HID directly above; SDL_PollEvent calls N3DS_PumpEvents which calls
 	// aptMainLoop() and fires a spurious SDL_QUIT for certain button presses in Azahar HLE.
