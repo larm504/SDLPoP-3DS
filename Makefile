@@ -40,7 +40,7 @@ ROMFS           :=  romfs
 
 APP_TITLE       :=  Prince of Persia
 APP_DESCRIPTION :=  SDLPoP - Prince of Persia
-APP_AUTHOR      :=  David, Norbert
+APP_AUTHOR      :=  larm504 (3DS port); David, Norbert (SDLPoP)
 
 #---------------------------------------------------------------------------------
 # options for code generation
