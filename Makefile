@@ -122,7 +122,7 @@ ifneq ($(strip $(ROMFS)),)
     export _3DSXFLAGS   +=  --romfs=$(CURDIR)/$(ROMFS)
 endif
 
-.PHONY: $(BUILD) clean all romfs-setup
+.PHONY: $(BUILD) clean all cia romfs-setup
 
 #---------------------------------------------------------------------------------
 all: $(BUILD)
@@ -141,7 +141,28 @@ romfs-setup:
 
 #---------------------------------------------------------------------------------
 clean:
-	@rm -rf $(BUILD) $(TARGET).3dsx $(TARGET).smdh $(TARGET).elf
+	@rm -rf $(BUILD) $(TARGET).3dsx $(TARGET).smdh $(TARGET).elf $(TARGET).cia banner.bin icon.bin
+
+#---------------------------------------------------------------------------------
+# CIA build — requires bannertool and makerom in PATH
+#---------------------------------------------------------------------------------
+cia: $(BUILD)
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@echo "Building banner.bin and icon.bin..."
+	bannertool makebanner -i $(TOPDIR)/banner.png -a $(TOPDIR)/banner.wav -o $(TOPDIR)/banner.bin
+	bannertool makesmdh  -s "$(APP_TITLE)" -l "$(APP_DESCRIPTION)" -p "$(APP_AUTHOR)" \
+	                     -i $(TOPDIR)/icon.png -o $(TOPDIR)/icon.bin
+	@echo "Building $(TARGET).cia..."
+	makerom -f cia -o $(TOPDIR)/$(TARGET).cia \
+	        -DAPP_ENCRYPTED=false \
+	        -target t \
+	        -desc app:4 \
+	        -DDIR_ROMFS=$(TOPDIR)/$(ROMFS) \
+	        -elf $(TOPDIR)/$(TARGET).elf \
+	        -rsf $(TOPDIR)/cia.rsf \
+	        -banner $(TOPDIR)/banner.bin \
+	        -icon $(TOPDIR)/icon.bin
+	@echo "Built $(TARGET).cia"
 
 #---------------------------------------------------------------------------------
 else
