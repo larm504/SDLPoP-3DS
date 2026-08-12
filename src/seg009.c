@@ -2191,6 +2191,11 @@ void init_digi() {
 	if (digi_unavailable) return;
 	if (digi_audiospec != NULL) return;
 	// Open the audio device. Called once.
+#ifdef __3DS__
+	// Software MIDI rendering is too CPU-intensive for O3DS; disable music to
+	// prevent frame drops. Sound effects (PCM) are unaffected.
+	enable_music = 0;
+#endif
 	//printf("init_digi(): called\n");
 
 #ifdef __3DS__
