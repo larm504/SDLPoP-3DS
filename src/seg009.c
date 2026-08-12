@@ -2610,16 +2610,15 @@ void update_bottom_screen(void) {
 		hud_draw_text(40, 20, 50, 148, halign_center, valign_top, "CONTROLS", color_14_brightyellow);
 		typedef struct { const char* btn; const char* act; } ctrl_row;
 		static const ctrl_row controls[] = {
-			{ "D-pad",  "Move"      },
-			{ "A / R",  "Step"      },
-			{ "B",      "Jump"      },
-			{ "Up",     "Jump (alt)"},
-			{ "X",      "OK"        },
-			{ "Y/Sel",  "Cancel"    },
-			{ "Start",  "Pause"     },
+			{ "D-pad",    "Move"   },
+			{ "A / R",    "Step"   },
+			{ "B / Up",   "Jump"   },
+			{ "X",        "OK"     },
+			{ "Y/Start",  "Pause"  },
+			{ "Sel",      "Back"   },
 		};
-		for (int i = 0; i < 7; ++i) {
-			int y = 55 + i * 19;
+		for (int i = 0; i < 6; ++i) {
+			int y = 55 + i * 22;
 			hud_draw_text(y, 22,  y+10, 78,  halign_left, valign_top, controls[i].btn, color_11_brightcyan);
 			hud_draw_text(y, 80,  y+10, 148, halign_left, valign_top, controls[i].act, color_15_brightwhite);
 		}
@@ -3685,11 +3684,11 @@ void process_events() {
 			{ KEY_DDOWN  | KEY_CPAD_DOWN,  SDL_SCANCODE_DOWN      },
 			{ KEY_DLEFT  | KEY_CPAD_LEFT,  SDL_SCANCODE_LEFT      },
 			{ KEY_DRIGHT | KEY_CPAD_RIGHT, SDL_SCANCODE_RIGHT     },
-			{ KEY_A | KEY_R,               SDL_SCANCODE_LSHIFT    }, // action (A or R shoulder)
-			{ KEY_B,                       SDL_SCANCODE_RSHIFT    }, // also action
+			{ KEY_A | KEY_R,               SDL_SCANCODE_LSHIFT    }, // action (step/grab)
+			{ KEY_B,                       SDL_SCANCODE_UP        }, // jump
 			{ KEY_X,                       SDL_SCANCODE_RETURN    }, // confirm/continue
-			{ KEY_Y,                       SDL_SCANCODE_ESCAPE    }, // pause (Start exits via HBL; use Y instead)
-			{ KEY_SELECT,                  SDL_SCANCODE_BACKSPACE }, // pause menu / back
+			{ KEY_Y | KEY_START,           SDL_SCANCODE_ESCAPE    }, // pause
+			{ KEY_SELECT,                  SDL_SCANCODE_BACKSPACE }, // back in menu
 			{ KEY_L,                       SDL_SCANCODE_SPACE     }, // show timer
 		};
 		for (int i = 0; i < (int)(sizeof(map)/sizeof(map[0])); i++) {

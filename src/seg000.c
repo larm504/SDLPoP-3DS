@@ -19,6 +19,9 @@ The authors of this program may be contacted at https://forum.princed.org
 */
 
 #include "common.h"
+#ifdef __3DS__
+#include <3ds.h>
+#endif
 #include <setjmp.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -2500,6 +2503,13 @@ void show_splash() {
 	}
 	key_states[SDL_SCANCODE_LSHIFT] &= ~KEYSTATE_HELD; // don't immediately start the game if Shift was pressed!
 	key_states[SDL_SCANCODE_RSHIFT] &= ~KEYSTATE_HELD;
+#ifdef __3DS__
+	// Wait for all physical buttons to be released before the title screen polls input,
+	// otherwise the dismiss press bleeds through and skips straight to gameplay.
+	do { idle(); } while (hidKeysHeld() != 0);
+	memset(key_states, 0, SDL_NUM_SCANCODES * sizeof(key_states[0]));
+	for (int i = 0; i < JOYINPUT_NUM; i++) joy_button_states[i] = 0;
+#endif
 #endif
 }
 
