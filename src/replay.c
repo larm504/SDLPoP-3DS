@@ -261,6 +261,7 @@ byte open_replay_file(const char *filename) {
 }
 
 void change_working_dir_to_sdlpop_root(void) {
+	if (g_argv == NULL || g_argv[0] == NULL) return;
 	char* exe_path = g_argv[0];
 	// strip away everything after the last slash or backslash in the path
 	int len;

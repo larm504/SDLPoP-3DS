@@ -68,17 +68,20 @@ void find_exe_dir(void) {
 		NameFromLock( GetProgramDir(), exe_dir, sizeof(exe_dir) );
 	}
 #else
-	snprintf_check(exe_dir, sizeof(exe_dir), "%s", g_argv[0]);
-	char* last_slash = NULL;
-	char* pos = exe_dir;
-	for (char c = *pos; c != '\0'; ++pos, c = *pos) {
-		if (c == '/' || c == '\\') {
-			last_slash = pos;
+	if (g_argv != NULL && g_argv[0] != NULL) {
+		snprintf_check(exe_dir, sizeof(exe_dir), "%s", g_argv[0]);
+		char* last_slash = NULL;
+		char* pos = exe_dir;
+		for (char c = *pos; c != '\0'; ++pos, c = *pos) {
+			if (c == '/' || c == '\\') {
+				last_slash = pos;
+			}
+		}
+		if (last_slash != NULL) {
+			*last_slash = '\0';
 		}
 	}
-	if (last_slash != NULL) {
-		*last_slash = '\0';
-	}
+	// else: exe_dir stays as "." — correct for 3DS CIA (romfs:/ is CWD)
 #endif
 	found_exe_dir = true;
 }

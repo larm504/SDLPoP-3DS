@@ -2421,6 +2421,7 @@ dword exe_crc = 0;
 
 void calculate_exe_crc(void) {
 	if (exe_crc == 0) {
+		if (g_argv == NULL || g_argv[0] == NULL) return;
 		// Get the CRC32 fingerprint of the executable.
 		FILE* exe_file = fopen(g_argv[0], "rb");
 		if (exe_file != NULL) {
