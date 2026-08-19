@@ -2720,6 +2720,7 @@ void set_gr_mode(byte grmode) {
 		sdlperror("set_gr_mode: SDL_SetVideoMode");
 		quit(1);
 	}
+	SDL_ShowCursor(SDL_DISABLE);
 	init_bottom_screen();
 #else
 #ifdef SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING
