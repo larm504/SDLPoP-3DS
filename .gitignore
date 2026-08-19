@@ -93,4 +93,18 @@ screenshots/
 *.3dsx
 *.smdh
 *.cia
+*.elf
+*.romfs
 romfs/
+cia_romfs/
+
+# CIA asset intermediates
+banner.bin
+icon.bin
+banner.wav
+
+# Hardware crash dumps
+crash_dump*.dmp
+
+# Claude Code project files
+.claude/

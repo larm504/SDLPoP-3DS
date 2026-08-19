@@ -4,25 +4,23 @@ A Nintendo 3DS homebrew port of [SDLPoP](https://github.com/NagyD/SDLPoP), the o
 
 ---
 
-## Download & Install
+## Install
 
-### CIA (recommended — installs to Home Menu)
+### CIA — Home Menu (recommended)
 
-> **QR code install coming soon.**
+Scan with **FBI → Remote Install → Scan QR Code:**
 
-1. Download `prince.cia` from the [latest release](../../releases/latest).
-2. Copy it to your SD card.
-3. Open **FBI** → SD → select `prince.cia` → Install.
-4. Launch **Prince of Persia** from the Home Menu.
+<p align="center">
+  <img src="assets/qr.png" width="220" alt="QR code — scan with FBI to install">
+</p>
 
-### 3DSX (Homebrew Launcher)
+Or download `prince.cia` from the [latest release](../../releases/latest) and install manually via FBI.
 
-1. Download `prince.3dsx` from the [latest release](../../releases/latest).
-2. Copy it to `/3ds/SDLPoP/prince.3dsx` on your SD card.
-3. Launch via the Homebrew Launcher.
+### 3DSX — Homebrew Launcher
 
-No separate data files needed — game data is bundled inside both files.
+Download `prince.3dsx` from the [latest release](../../releases/latest) and copy to `/3ds/SDLPoP/prince.3dsx` on your SD card.
 
+No separate data files needed — game data is bundled inside both files.  
 Save files are written to `sdmc:/SDLPoP/` automatically.
 
 ---
@@ -45,29 +43,27 @@ The bottom screen shows a live controls reference and game status (level, HP, ti
 
 ## Known Limitations
 
-- **Startup lag:** Loading takes 10–20 seconds on O3DS / 2DS before the title screen appears. This is normal — the game data is large and the hardware is slow at decompressing it. Performance is smooth once the game starts.
-- **No music:** Background music is disabled to prevent gameplay lag on O3DS hardware. Sound effects work fully.
-- **HOME button:** Pressing HOME mid-game does not suspend to the Home Menu (a limitation of the SDL event loop). Use **Y or Start to pause first**, then power off or go home from there.
-- **Title screen:** Press **X** to start a new game from the title screen. If the input feels unresponsive, the game is still loading — wait a moment and try again.
+- **Startup lag:** Loading takes 10–20 seconds on O3DS / 2DS. Performance is smooth once in-game.
+- **No music:** Disabled to prevent gameplay lag on O3DS. Sound effects work fully.
+- **HOME button:** Pressing HOME mid-game doesn't suspend to the Home Menu. Use Y or Start to pause first.
+- **Title screen:** Press **X** to start. If input feels slow, the game is still loading — wait a moment.
 
 ---
 
 ## Building from Source
 
-Requires [devkitPro](https://devkitpro.org) with devkitARM and the following 3DS packages:
+Requires [devkitPro](https://devkitpro.org) with devkitARM and the following packages:
 
 ```
 dkp-pacman -S devkitARM 3ds-sdl 3ds-sdl_image 3ds-sdl_mixer libctru citro3d
 ```
 
-Clone the repo, then from the devkitPro MSYS2 shell:
-
 ```bash
-make        # builds prince.3dsx + prince.elf
+make        # builds prince.3dsx
 make cia    # also builds prince.cia (requires bannertool and makerom in PATH)
 ```
 
-All 3DS-specific changes are isolated behind `#ifdef __3DS__` so the upstream PC build is unaffected.
+All 3DS-specific changes are isolated behind `#ifdef __3DS__` — the upstream PC build is unaffected.
 
 ---
 

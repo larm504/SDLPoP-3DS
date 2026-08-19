@@ -148,6 +148,10 @@ clean:
 #---------------------------------------------------------------------------------
 cia: $(BUILD)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@echo "Staging romfs (resolving junction)..."
+	@rm -rf $(TOPDIR)/cia_romfs
+	@mkdir -p $(TOPDIR)/cia_romfs
+	@cp -r $(TOPDIR)/data $(TOPDIR)/cia_romfs/data
 	@echo "Building banner.bin and icon.bin..."
 	bannertool makebanner -i $(TOPDIR)/banner.png -a $(TOPDIR)/banner.wav -o $(TOPDIR)/banner.bin
 	bannertool makesmdh  -s "$(APP_TITLE)" -l "$(APP_DESCRIPTION)" -p "$(APP_AUTHOR)" \
@@ -157,11 +161,12 @@ cia: $(BUILD)
 	        -DAPP_ENCRYPTED=false \
 	        -target t \
 	        -desc app:4 \
-	        -DDIR_ROMFS=$(TOPDIR)/$(ROMFS) \
+	        -DDIR_ROMFS=$(TOPDIR)/cia_romfs \
 	        -elf $(TOPDIR)/$(TARGET).elf \
 	        -rsf $(TOPDIR)/cia.rsf \
 	        -banner $(TOPDIR)/banner.bin \
 	        -icon $(TOPDIR)/icon.bin
+	@rm -rf $(TOPDIR)/cia_romfs
 	@echo "Built $(TARGET).cia"
 
 #---------------------------------------------------------------------------------
