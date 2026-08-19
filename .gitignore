@@ -98,10 +98,9 @@ screenshots/
 romfs/
 cia_romfs/
 
-# CIA asset intermediates
+# CIA asset intermediates (banner.wav, banner.png, icon.png are committed build inputs)
 banner.bin
 icon.bin
-banner.wav
 
 # Hardware crash dumps
 crash_dump*.dmp

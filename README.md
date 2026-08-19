@@ -1,27 +1,26 @@
-# Prince of Persia — Nintendo 3DS Port
+# Prince of Persia - Nintendo 3DS Port
 
-A Nintendo 3DS homebrew port of [SDLPoP](https://github.com/NagyD/SDLPoP), the open-source Prince of Persia engine. Hardware-tested and working on 2DS and O3DS.
+Nintendo 3DS homebrew port of [SDLPoP](https://github.com/NagyD/SDLPoP), the open-source Prince of Persia engine. Tested on real hardware (2DS and O3DS).
 
 ---
 
 ## Install
 
-### CIA — Home Menu (recommended)
+### CIA (Home Menu) - recommended
 
-Scan with **FBI → Remote Install → Scan QR Code:**
+Scan with **FBI -> Remote Install -> Scan QR Code:**
 
 <p align="center">
-  <img src="assets/qr.png" width="220" alt="QR code — scan with FBI to install">
+  <img src="assets/qr.png" width="220" alt="QR code for FBI install">
 </p>
 
-Or download `prince.cia` from the [latest release](../../releases/latest) and install manually via FBI.
+Or download `prince.cia` from the [latest release](../../releases/latest) and install manually through FBI.
 
-### 3DSX — Homebrew Launcher
+### 3DSX (Homebrew Launcher)
 
-Download `prince.3dsx` from the [latest release](../../releases/latest) and copy to `/3ds/SDLPoP/prince.3dsx` on your SD card.
+Download `prince.3dsx` from the [latest release](../../releases/latest) and copy it to `/3ds/SDLPoP/prince.3dsx` on your SD card.
 
-No separate data files needed — game data is bundled inside both files.  
-Save files are written to `sdmc:/SDLPoP/` automatically.
+Game data is bundled in the file, no extra files needed. Save files go to `sdmc:/SDLPoP/` automatically.
 
 ---
 
@@ -37,22 +36,22 @@ Save files are written to `sdmc:/SDLPoP/` automatically.
 | Select | Back / cancel |
 | L | Show time remaining |
 
-The bottom screen shows a live controls reference and game status (level, HP, time).
+The bottom screen shows a controls reference and live game status (level, HP, time).
 
 ---
 
-## Known Limitations
+## Known Issues
 
-- **Startup lag:** Loading takes 10–20 seconds on O3DS / 2DS. Performance is smooth once in-game.
-- **No music:** Disabled to prevent gameplay lag on O3DS. Sound effects work fully.
-- **HOME button:** Pressing HOME mid-game doesn't suspend to the Home Menu. Use Y or Start to pause first.
-- **Title screen:** Press **X** to start. If input feels slow, the game is still loading — wait a moment.
+- **Startup lag:** Takes 10-20 seconds to load on O3DS/2DS before the title screen appears. Runs fine once it's loaded.
+- **No music:** Turned off to stop gameplay lag on O3DS. Sound effects work fine.
+- **HOME button:** Pressing HOME mid-game won't suspend to the Home Menu. Pause with Y or Start first.
+- **Title screen:** Press X to start. If it doesn't respond right away, the game is still loading, just wait a bit.
 
 ---
 
-## Building from Source
+## Building
 
-Requires [devkitPro](https://devkitpro.org) with devkitARM and the following packages:
+Requires [devkitPro](https://devkitpro.org) with devkitARM and these packages:
 
 ```
 dkp-pacman -S devkitARM 3ds-sdl 3ds-sdl_image 3ds-sdl_mixer libctru citro3d
@@ -63,15 +62,15 @@ make        # builds prince.3dsx
 make cia    # also builds prince.cia (requires bannertool and makerom in PATH)
 ```
 
-All 3DS-specific changes are isolated behind `#ifdef __3DS__` — the upstream PC build is unaffected.
+All 3DS changes are behind `#ifdef __3DS__` so the upstream PC build still works fine.
 
 ---
 
 ## Credits
 
-- Original SDLPoP by [NagyD](https://github.com/NagyD/SDLPoP) and contributors — see [README-upstream.md](README-upstream.md)
-- Nintendo 3DS port by [larm504](https://github.com/larm504)
+- Original SDLPoP by [NagyD](https://github.com/NagyD/SDLPoP) and contributors (see [README-upstream.md](README-upstream.md))
+- 3DS port by [larm504](https://github.com/larm504)
 
 ## License
 
-GPLv3 — same as the upstream SDLPoP project. See [LICENSE](LICENSE).
+GPLv3, same as upstream SDLPoP. See [LICENSE](LICENSE).
