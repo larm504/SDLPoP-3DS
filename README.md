@@ -46,6 +46,7 @@ The bottom screen shows a controls reference and live game status (level, HP, ti
 - **No music:** Turned off to stop gameplay lag on O3DS. Sound effects work fine.
 - **HOME button:** Pressing HOME mid-game won't suspend to the Home Menu. Pause with Y or Start first.
 - **Title screen:** Press X to start. If it doesn't respond right away, the game is still loading, just wait a bit.
+- **N3DS CIA:** Some N3DS users report the CIA installs but doesn't appear on the Home Menu. The 3DSX works fine on N3DS as a workaround while this gets sorted.
 
 ---
 
