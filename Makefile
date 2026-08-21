@@ -161,6 +161,7 @@ cia: $(BUILD)
 	        -DAPP_ENCRYPTED=false \
 	        -target t \
 	        -desc app:4 \
+	        -exefslogo \
 	        -DDIR_ROMFS=$(TOPDIR)/cia_romfs \
 	        -elf $(TOPDIR)/$(TARGET).elf \
 	        -rsf $(TOPDIR)/cia.rsf \

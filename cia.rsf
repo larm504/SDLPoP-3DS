@@ -5,6 +5,10 @@ BasicInfo:
   ContentType:    Application
   Logo:           Nintendo
 
+TitleInfo:
+  UniqueId:     0x0C3D50
+  Category:     Application
+
 Option:
   UseOnSD:        true
   FreeProductCode: true
