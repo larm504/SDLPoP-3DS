@@ -2415,6 +2415,7 @@ sound_buffer_type* convert_digi_sound(sound_buffer_type* digi_buffer) {
 	int expanded_frames = source_length * digi_audiospec->freq / waveinfo.sample_rate;
 	int expanded_length = expanded_frames * 2 * sizeof(short);
 	sound_buffer_type* converted_buffer = malloc(sizeof(sound_buffer_type) + expanded_length);
+	if (converted_buffer == NULL) return NULL;
 
 	converted_buffer->type = sound_digi_converted;
 	converted_buffer->converted.length = expanded_length;
@@ -2422,6 +2423,7 @@ sound_buffer_type* convert_digi_sound(sound_buffer_type* digi_buffer) {
 	byte* source = waveinfo.samples;
 	//short* dest = converted_buffer->converted.samples;
 	short* dest = malloc(sizeof(short) * converted_buffer->converted.length);
+	if (dest == NULL) { free(converted_buffer); return NULL; }
         converted_buffer->converted.samples = dest;
 
 	for (int i = 0; i < expanded_frames; ++i) {
